@@ -23,7 +23,19 @@ prompt library built from your own questions.
 ---
 
 ### 1.
+What are customers saying about the new release?
 
 ### 2.
+Are there any high priority bugs already identified in 4.2?
 
 ### 3.
+Can you show me a pareto chart of tickets by category and count?
+
+### 4.
+Are the ping complaints coming from particular geographies, users, or other specific sources?
+
+### 5.
+You just said each area has exactly one responder, but the notes from the interviews said that calls were getting diverted to other responders before the first had a chance to respond. Doesn't this require multiple responders per area?
+
+### 6.
+Which category would you prioritize addressing? The the greater number of tickets from fewer responders or the fewer tickets from a greater number of responders?
