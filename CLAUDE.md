@@ -141,3 +141,16 @@ The Q3 roadmap was last reviewed 30 Jun. Every item still lists Priya as owner.
   route citywide, and turned-down or missed pings mostly go to responders in other areas.
 - Leaning: prioritize the "few or no pings" group, and raise the 60s ping wait with Marcus and Helen in
   parallel. Open next step: compare pings per responder before and after 12 Aug in the pings table.
+
+- Session 2 findings: all 147 tickets (29 Jun–7 Sep) sorted into 11 groups. Every "few or no pings" (30) and
+  "gone before answering" (15) ticket is on or after 12 Aug. Supply is the 2nd-largest group (26). Many
+  tickets reuse identical wording, so counts overstate distinct voices. Only Mr. Ambrose filed a ticket of the 4 interviewees.
+- Interviews vs tickets: "handler can't see a live/missed callout" is 3 of 4 interviews but almost absent from
+  tickets. Overload (The Gale) appears in no ticket. Account/sign-in and layout issues fill tickets but no
+  interview. Halloran says maintenance scheduling improved; 4 tickets contradict him.
+- Working hypothesis (unverified): a feedback loop. The 60s wait causes misses, misses lower the routing
+  acceptance score, and responders get fewer pings and can't climb back. Farlight and The Undertow each missed their first ping in days.
+- Drafted (in chat only, not saved as files): weighted 4.3 backlog with P0 = both callout fixes, a revised 8-week
+  4.3 roadmap, and a sprint initiative/epic/story with a 3-day spike (Ravi + Wen) to confirm the loop in the pings table.
+- Still open: 4.3 date (ask Marcus), Availability Confidence in/out (Helen), Marcus's 14 Aug routing
+  question, a fresh ticket export (Nadia), and whether to recompute scores retroactively.
