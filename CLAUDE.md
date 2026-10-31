@@ -154,3 +154,16 @@ The Q3 roadmap was last reviewed 30 Jun. Every item still lists Priya as owner.
   4.3 roadmap, and a sprint initiative/epic/story with a 3-day spike (Ravi + Wen) to confirm the loop in the pings table.
 - Still open: 4.3 date (ask Marcus), Availability Confidence in/out (Helen), Marcus's 14 Aug routing
   question, a fresh ticket export (Nadia), and whether to recompute scores retroactively.
+
+- **Data rule (from student):** Before analyzing, check the structure of every table I'll use: describe it, then check its date range, row counts and column values. Report only numbers from queries actually run on the data provided. If a question can't be answered from the tables, say so plainly instead of guessing. If later checks contradict an earlier claim, correct the claim instead of adding caveats. Report any failed tool call, even if a retry works.
+- Session 3 findings (pings, 1,696 rows, 29 Jun–6 Sep, split at 12 Aug): missed pings 2.3% → 18.0%, acceptance 76.6% → 64.0%;
+  the rise in misses accounts for the whole drop and hit all 16 responders. Every callout got at least one ping (no coverage gaps);
+  callouts pinged but never taken 5.5% → 11.1%.
+- Hardest hit (pings/wk down ~70%): Farlight, The Undertow, Vesper, Meteor Mite. All four were in the busier half before 4.2 with
+  normal response rates. Ashgrove and Halfmoon fell only ~20%; the other 10 got more pings. The four's share of first pings fell
+  28.1% → 9.1%; Vesper went from first ping on 85% of Old Town callouts to 5 of 38 (0 of 4 in 12–16 Aug).
+- Tickets vs pings: every ping count quoted in a ticket matches the data, but ticket volume doesn't track severity. Aunt Dot, Kip
+  and Halloran have never filed a ticket; Mr. Ambrose filed one. Some ticket timestamps match ping times to the second, so they
+  may be generated, not recorded (ask Nadia).
+- Routing scores are not in rook-database (ask Wen or Ravi). Open: was Vesper's early drop caused by her misses or by the 4.2
+  routing change itself?
