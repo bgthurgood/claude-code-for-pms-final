@@ -167,3 +167,16 @@ The Q3 roadmap was last reviewed 30 Jun. Every item still lists Priya as owner.
   may be generated, not recorded (ask Nadia).
 - Routing scores are not in rook-database (ask Wen or Ravi). Open: was Vesper's early drop caused by her misses or by the 4.2
   routing change itself?
+
+- Session 4 findings (code in 00-rook/code/dispatch-routing/): only config.py changed in 4.2 (wait 90→60s, weights distance 45→60%,
+  yes-score 40→25%, skills 15%). The code never removes anyone from the list; it only orders them. A miss costs the same −0.12 as a
+  "no", a yes adds +0.08, and nothing else ever adds points back (no decay or reset; 2019 TODO left as-is). The scores sit in memory only.
+- The yes-score (stored, 0–1, unweighted ±) is different from the overall ranking score (recomputed per callout; the 25% applies only there).
+  Replaying the code's rules over the pings shows the four were at 0.84–1.00 at release (same as others), then fell to 0.00 by early Sep.
+  So Marcus's "turn-downers" question doesn't explain the drop. Misses do, plus no way back.
+- Time-of-day hypothesis ruled out: no night pings for the four in the first 48h; they miss 47–77% in every time band after 4.2.
+  Fitted typical answer time is ≈61–64s for each of the four vs ≈38s for others, so 60s cuts right through them.
+- Simulator (in chat only): from today's zero scores, 90s alone doesn't recover the four; 90s plus a reset or recovery does. Model is
+  calibrated to replay but falls slower than reality. Old weights + 60s would likely have been worse (a miss is ≈4.8 vs 2.3 min of travel).
+- Proposed scoring idea: charge per second a ping is held (fast no < slow no < miss), no penalty for marking unavailable, rolling window.
+  Open: Vesper's day-one drop (travel-time estimates, ask Wen), stored scores, actual answer times (Ravi), whether scores persist across restarts.
