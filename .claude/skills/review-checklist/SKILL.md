@@ -1,6 +1,6 @@
 ---
 name: review-checklist
-description: Reviews a product brief against six checks: it names who owns it, says how we'll know it worked, keeps the same scope from start to finish, explains the problem before the fix, is as concise as it can be for management review without losing key information, and stays centred on the people who use the product rather than on technical sophistication. Use it when the student points at a brief and says "review this brief", "run the review checklist", "check my brief", "is this brief ready", or "/review-checklist <file>".
+description: Reviews a product brief against six checks: it names who owns it, says how we'll know it worked, keeps the same scope from start to finish, explains the problem before the fix, is as concise as it can be for management review without losing key information, and proposes a solution shaped around the people who use the product rather than around technical sophistication. Use it when the student points at a brief and says "review this brief", "run the review checklist", "check my brief", "is this brief ready", or "/review-checklist <file>".
 ---
 
 # Review checklist
@@ -52,14 +52,18 @@ The reader is a director with a few minutes. The brief should be as short as it 
 - Missing: too long to read in a few minutes, or so short that key information from the list above is absent.
 - Report the word count. For each suggested cut, name what to cut and confirm it isn't key information. Never suggest cutting key information to save words; if the brief is missing some, say that instead.
 
-### Check 6: Centred on the people who use it
-The brief should be about what changes for the people who use the product (for Rook: responders, handlers, quartermasters), not about how clever the solution is.
-- Look for: the problem told from the user's side (what they experience, ideally in their words), the change described as what they'll see or do differently, and at least one success measure about their experience rather than only system numbers.
-- Technical detail (code, config values, weights, algorithms, scores) is fine when the reader needs it to make a decision or understand a trade-off. It counts against this check when it takes up more room than the user's experience, is there to show sophistication, or uses jargon the reader would have to look up.
-- Pass: users are the subject throughout, and technical detail is brief and serves a decision.
-- Partly: users are present, but some sections lead with mechanism, use undefined technical terms, or measure success only in system terms.
-- Missing: the brief is mainly about the technical design and users are an afterthought.
-- Quote the sentences that are most technical-first and suggest a user-first rewording of one or two of them.
+### Check 6: The solution is shaped around the people who use it
+This check is about the **solution the brief proposes**, not mainly its wording. Ask: was this solution designed from what users need, or from what is technically interesting, elegant or easy to build? (For Rook, users are responders, handlers and quartermasters.)
+- **Each part traces to a user need.** For every piece of the proposed solution, is there a user problem or piece of user evidence that calls for it? Flag parts that exist because they're technically neat, convenient for us, or "while we're at it", with no user need behind them.
+- **It fixes what users actually experience.** Does the solution change the moment the user struggles with, or does it improve something underneath that the user may never notice? A clever fix that leaves the user's experience the same counts against this check.
+- **All affected users are considered.** Does the brief think about everyone the change touches, including people who don't benefit or who are made worse off (e.g. the other side of a handler–responder pair, a user group that loses something)? Silence about an obviously affected group counts against it.
+- **Trade-offs are judged from the user's side.** When the brief chooses between options, is the deciding reason what users gain or lose, or only cost, elegance or engineering effort?
+- **Success means users are better off.** At least one success measure is about users' experience or outcome, not only system activity.
+- Technical sophistication is fine when it serves one of the points above. Wording matters only as a symptom: if the brief explains the mechanism at length and the user's experience in a line, that usually means the solution was designed from the mechanism outward.
+- Pass: every part of the solution traces to a user need, affected users are considered, and success is measured in user terms.
+- Partly: the solution is broadly user-driven, but one or two parts lack a user reason, an affected group is overlooked, or a key trade-off is decided on technical grounds.
+- Missing: the solution is mainly a technical idea looking for a use, and users appear only as justification after the fact.
+- Name the parts of the solution with no user need behind them, and any affected users the brief leaves out.
 
 ## 3. Report back
 
@@ -74,7 +78,7 @@ Keep it short and plain. Use this shape:
 | Same scope start to finish | ... | ... |
 | Problem before the fix | ... | ... |
 | Concise for management review | ... | "<word count> words" plus the main cut |
-| Centred on the people who use it | ... | ... |
+| Solution shaped around users | ... | ... |
 
 Then, for every check that isn't a Pass, one bullet with the smallest change that would make it pass, in the brief's own words where you can (e.g. "Add `**Owner:** <name>` to line 3"). If you'd need information the brief doesn't have, such as who the owner is, say so and leave it as a question for the student. Don't invent names, numbers or dates.
 
