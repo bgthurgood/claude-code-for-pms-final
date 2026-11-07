@@ -36,7 +36,10 @@ Run a test on the my brief & assume we’ve built the prototype in a staging env
 Ask me questions if you see fit.
 
 ### 7.
-The 05-super-speed isn't loading and the hyperlink to see it in full screen also doesn't work
+Read CLAUDE.md and all six prompts.md files in this repo. For each module, pull one real finding or artifact and the exact prompt I wrote that produced it. Build a single HTML presentation that says plainly what happened with Release 4.2, backs it up with those findings and prompts, shows the fix through my prototype, and explains how my skill keeps it from happening again. Make it visually engaging, not just text. Save it as final-report.html, then save my work.
 
 ### 8.
+The 05-super-speed isn't loading and the hyperlink to see it in full screen also doesn't work
+
+### 9.
 Add an additional section at the end that "breaks the fourth wall" and describes in a compelling and visual way what all this work means about me as an individual who has completed this course. Make it compelling to a current employer about the value add of having participated in this course as well as a potential pitch or asset to be used in future job searches.
