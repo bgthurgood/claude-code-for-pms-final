@@ -198,3 +198,10 @@ The Q3 roadmap was last reviewed 30 Jun. Every item still lists Priya as owner.
   On Sofia's Handler Phone App wiki brief: 1 of 6 pass (owner is a role, no baseline, no trade-offs or ask; status view and one-tap contact have no user evidence; responders not considered).
 - QA run on brief.md vs prototype.html: 30 draft criteria + 7 not-testable saved in 05-super-speed/qa-brief-criteria.md. NOT yet approved or tested.
   Open defaults to confirm: Behind-the-scenes score panel is a demo aid; test Not now as free (log the detail-file contradiction); Today mode in scope as Should.
+
+- Session 7 (final report): built final-report.html at the repo root, a 9-section scrolling presentation. It covers the plain 4.2 answer, weekly charts, the loop and a score simulator,
+  one exact prompt + finding per module, the fix with the prototype, review-checklist mapped to 4.2's gaps, decisions by person, and a "fourth wall" section about me (pitch + résumé bullets).
+- Re-ran the pings numbers on 7 Nov: they match Session 3. New: pings to the quiet four by week went 49 → 43 → 16 → 6 → 3, and weekly acceptance recovers to 72.7% by the week of 31 Aug,
+  partly because the slow answerers stopped being pinged (the average hides them). No prior-year data, so "August is always soft" can't be tested.
+- prototype.html and whathappened.html are embedded in final-report.html as base64 copies taken 7 Nov (relative links failed in the app preview). If either file changes, refresh the copies.
+- Open: résumé bullets say the certification is "completed (2026)" and the page has no name on it; confirm the wording before sharing.

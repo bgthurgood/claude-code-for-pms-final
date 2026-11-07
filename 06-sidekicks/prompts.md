@@ -34,3 +34,9 @@ Make a skill called qa-testing. When I point to the product brief that outlines 
 Run a test on the my brief & assume we’ve built the prototype in a staging environment.
 
 Ask me questions if you see fit.
+
+### 7.
+The 05-super-speed isn't loading and the hyperlink to see it in full screen also doesn't work
+
+### 8.
+Add an additional section at the end that "breaks the fourth wall" and describes in a compelling and visual way what all this work means about me as an individual who has completed this course. Make it compelling to a current employer about the value add of having participated in this course as well as a potential pitch or asset to be used in future job searches.
