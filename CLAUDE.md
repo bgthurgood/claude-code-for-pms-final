@@ -190,3 +190,11 @@ The Q3 roadmap was last reviewed 30 Jun. Every item still lists Priya as owner.
   so it recovered. Re-scoring the same pings under the brief's placeholder rules: Mite and Vesper end at 0.60, Farlight 0.50, The Undertow 0.45 (all 0.00 under 4.2).
 - Open: Not now is free in the one-pager but costs a little in the detail file (settle it). The brief says Gale takes "Eastgate" callouts, but routing is citywide (fix).
   Today's phone flow is assumed, not checked with Sofia. The new-rule values are placeholders for Wen. Helen decides the reset's scope and the "on our side" wording.
+
+- Session 6 (Module 6): built two project skills in .claude/skills/. review-checklist rates a brief Pass/Partly/Missing on 6 checks: named owner,
+  measurable success, same scope throughout, problem before fix, concise for management (key info kept, ~600 words), and whether the solution itself is
+  shaped around users (not just wording). qa-testing turns a brief into Given/When/Then acceptance criteria, waits for approval, tests the build in the browser, writes findings.
+- review-checklist on my brief.md: Partly on all 6 checks, with Check 6 scored under its old wording (no named owner, measures lack dates/numbers, 924 words, "In short" leads with the fix).
+  On Sofia's Handler Phone App wiki brief: 1 of 6 pass (owner is a role, no baseline, no trade-offs or ask; status view and one-tap contact have no user evidence; responders not considered).
+- QA run on brief.md vs prototype.html: 30 draft criteria + 7 not-testable saved in 05-super-speed/qa-brief-criteria.md. NOT yet approved or tested.
+  Open defaults to confirm: Behind-the-scenes score panel is a demo aid; test Not now as free (log the detail-file contradiction); Today mode in scope as Should.
