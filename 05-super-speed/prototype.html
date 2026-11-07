@@ -1,0 +1,572 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quiet Responder Prototype</title>
+<style>
+:root{
+  --bg:#f4f2ee; --panel:#ffffff; --ink:#1d1c1a; --muted:#6b675f; --line:#dedad2;
+  --accent:#2f5d8a; --accent-ink:#ffffff; --ok:#2e7d4f; --warn:#b26a00; --bad:#b3362c;
+  --ok-bg:#e6f3ea; --warn-bg:#fdf1dc; --bad-bg:#f9e3e0; --info-bg:#e5eef7;
+  --phone:#111214; --phone-ink:#f2f2f2; --phone-card:rgba(255,255,255,.14);
+  --console:#fbfaf7;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#161616; --panel:#202020; --ink:#ecebe8; --muted:#a29d94; --line:#3a3936;
+    --accent:#7fb0e0; --accent-ink:#0f1a26; --ok:#6cc58f; --warn:#e8a64a; --bad:#ef7f74;
+    --ok-bg:#1d3326; --warn-bg:#3a2c14; --bad-bg:#3b1f1c; --info-bg:#1b2a3a; --console:#1b1b1b;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#161616; --panel:#202020; --ink:#ecebe8; --muted:#a29d94; --line:#3a3936;
+  --accent:#7fb0e0; --accent-ink:#0f1a26; --ok:#6cc58f; --warn:#e8a64a; --bad:#ef7f74;
+  --ok-bg:#1d3326; --warn-bg:#3a2c14; --bad-bg:#3b1f1c; --info-bg:#1b2a3a; --console:#1b1b1b;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{padding:20px 16px 8px;max-width:1180px;margin:0 auto}
+h1{font-size:22px;margin:0 0 4px}
+.sub{color:var(--muted);margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px 32px}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:14px 0;padding:12px;background:var(--panel);border:1px solid var(--line);border-radius:12px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.seg button{border:0;background:transparent;color:var(--ink);padding:7px 14px;font:inherit;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.btn{border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:7px 12px;border-radius:8px;font:inherit;cursor:pointer}
+.btn:hover:not(:disabled){border-color:var(--accent)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.lbl{color:var(--muted);font-size:13px;margin-right:2px}
+.spacer{flex:1}
+.caption{margin:0 0 14px;padding:10px 14px;border-radius:10px;background:var(--info-bg);font-size:14px}
+.caption b{font-weight:600}
+.grid{display:grid;grid-template-columns:340px 1fr;gap:20px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:1fr}}
+.where{font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:0 0 8px;display:flex;align-items:center;gap:8px}
+.where .dot{width:8px;height:8px;border-radius:50%;background:var(--line)}
+.where.live .dot{background:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 25%,transparent)}
+
+/* phone */
+.phone{width:300px;max-width:100%;height:600px;margin:0 auto;background:var(--phone);border-radius:42px;padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.25);position:relative}
+.screen{height:100%;border-radius:30px;overflow:hidden;position:relative;color:var(--phone-ink);
+  background:linear-gradient(160deg,#2b3a55 0%,#1c2436 55%,#151a26 100%);display:flex;flex-direction:column}
+.screen.app{background:#f6f5f2;color:#1d1c1a}
+.notch{width:90px;height:22px;background:var(--phone);border-radius:0 0 14px 14px;margin:0 auto}
+.lock-time{text-align:center;font-size:56px;font-weight:300;margin-top:18px;letter-spacing:-1px}
+.lock-date{text-align:center;font-size:14px;opacity:.8;margin-top:-4px}
+.stack{padding:14px 12px;display:flex;flex-direction:column;gap:10px;margin-top:auto;margin-bottom:auto}
+.notif{background:var(--phone-card);backdrop-filter:blur(8px);border-radius:18px;padding:12px 12px 10px;font-size:13.5px}
+.notif.tap{cursor:pointer}
+.notif .app{display:flex;align-items:center;gap:6px;font-size:11.5px;opacity:.8;margin-bottom:4px;text-transform:uppercase;letter-spacing:.03em}
+.notif .app i{width:16px;height:16px;border-radius:4px;background:#e2b33c;display:inline-block}
+.notif .t{font-weight:600;font-size:14.5px}
+.notif .row{display:flex;align-items:center;gap:10px;margin-top:8px}
+.notif .acts{display:flex;gap:8px;margin-top:10px}
+.notif .acts button{flex:1;border:0;border-radius:12px;padding:10px;font:600 14px system-ui,sans-serif;cursor:pointer}
+.take{background:#3fae6b;color:#fff}
+.notnow{background:rgba(255,255,255,.22);color:#fff}
+.ring{width:46px;height:46px;flex:none}
+.ring circle{fill:none;stroke-width:5}
+.ring .bgc{stroke:rgba(255,255,255,.2)}
+.ring .fg{stroke:#ffd166;stroke-linecap:round;transform:rotate(-90deg);transform-origin:50% 50%;transition:stroke-dashoffset .1s linear}
+.ring text{fill:#fff;font:600 13px system-ui,sans-serif}
+.msg{background:var(--phone-card);border-radius:18px;padding:14px;font-size:14px}
+.msg .h{font-weight:600;margin-bottom:4px}
+.msg.good{border-left:4px solid #3fae6b}
+.msg.info{border-left:4px solid #8ab4f8}
+.msg.grey{opacity:.85}
+.hint{font-size:12px;opacity:.7;text-align:center}
+.unlock{margin:auto;text-align:center;font-size:14px;opacity:.9}
+.spinner{width:28px;height:28px;border:3px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;margin:0 auto 10px;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.appbar{padding:10px 16px;background:#1f3047;color:#fff;font-weight:600;font-size:14px}
+.appbody{padding:16px;display:flex;flex-direction:column;gap:12px;flex:1}
+.appcard{background:#fff;border:1px solid #e1ddd5;border-radius:14px;padding:14px}
+.appbody .acts{display:flex;gap:8px;margin-top:auto}
+.appbody .acts button{flex:1;border:0;border-radius:12px;padding:12px;font:600 14px system-ui,sans-serif;cursor:pointer}
+.decline{background:#e6e2da;color:#1d1c1a}
+.gone{margin:auto;text-align:center;color:#6b675f}
+.home-ind{width:110px;height:4px;border-radius:2px;background:rgba(255,255,255,.6);margin:6px auto 8px}
+.screen.app .home-ind{background:rgba(0,0,0,.35)}
+
+/* console */
+.console{background:var(--console);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.ctop{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--panel)}
+.ctop b{font-size:14px}
+.ctop .who{margin-left:auto;color:var(--muted);font-size:13px}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:14px}
+@media (max-width:560px){.cards{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px;transition:box-shadow .3s,border-color .3s}
+.card.flash{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 30%,transparent)}
+.card h3{margin:0;font-size:16px}
+.card .meta{color:var(--muted);font-size:13px}
+.kv{display:flex;justify-content:space-between;font-size:13.5px;border-top:1px dashed var(--line);padding-top:8px}
+.pill{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px}
+.pill.ok{background:var(--ok-bg);color:var(--ok)}
+.pill.warn{background:var(--warn-bg);color:var(--warn)}
+.pill.bad{background:var(--bad-bg);color:var(--bad)}
+.pill.plain{background:var(--line);color:var(--ink)}
+.status{font-size:13.5px;padding:9px 11px;border-radius:9px}
+.status.ok{background:var(--ok-bg)}
+.status.warn{background:var(--warn-bg)}
+.status.bad{background:var(--bad-bg)}
+.alert{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;padding:9px 11px;border-radius:9px;background:var(--bad-bg);border:1px solid var(--bad)}
+.alert button{margin-left:auto}
+.empty{color:var(--muted);font-size:13px;font-style:italic}
+
+/* behind the scenes */
+.bts{margin-top:20px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+.bts h2{font-size:15px;margin:0 0 2px}
+.bts .note{color:var(--muted);font-size:13px;margin:0 0 10px}
+.scorebar{display:flex;align-items:center;gap:10px;font-size:13.5px;margin-bottom:10px;flex-wrap:wrap}
+.track{flex:1;min-width:160px;height:10px;background:var(--line);border-radius:5px;position:relative;overflow:hidden}
+.fill{height:100%;background:var(--accent);transition:width .4s}
+.neutral{position:absolute;left:50%;top:-3px;bottom:-3px;width:2px;background:var(--muted)}
+ol.log{margin:0;padding-left:20px;font-size:13.5px;max-height:220px;overflow:auto}
+ol.log li{margin:4px 0}
+ol.log .tag{font-size:11.5px;color:var(--muted);margin-left:6px}
+footer{color:var(--muted);font-size:12.5px;margin-top:16px}
+.who-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 14px}
+.who-row select{font:inherit;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);min-width:260px}
+.profile{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;padding:10px 14px;background:var(--panel);border:1px solid var(--line);border-radius:10px;font-size:13.5px;flex:1;min-width:280px}
+.profile .g{font-weight:600}
+.profile .src{color:var(--muted);font-size:12px;flex-basis:100%}
+.cards.one{grid-template-columns:1fr}
+.card .sel{font-size:11px;color:var(--accent);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+</style>
+</head>
+<body>
+<header>
+  <h1>When a responder goes quiet: prototype</h1>
+  <p class="sub">Built from <code>brief.md</code>. Pick a responder below: one of the quiet 4, or one of the two who got much busier after 4.2. Fictional course scenario.</p>
+</header>
+<div class="wrap">
+
+  <div class="who-row">
+    <label class="lbl" for="who">Responder</label>
+    <select id="who">
+      <optgroup label="Quiet 4: pushed down after 4.2">
+        <option value="Meteor Mite" selected>Meteor Mite · quiet 4 (Kip, Eastgate)</option>
+        <option value="Vesper">Vesper · quiet 4 (Aunt Dot, Old Town)</option>
+        <option value="The Undertow">The Undertow · quiet 4 (Desmond Okafor, Harborside)</option>
+        <option value="Farlight">Farlight · quiet 4 (Linda Pruitt, Uptown)</option>
+      </optgroup>
+      <optgroup label="Benefited: much busier after 4.2">
+        <option value="The Gale">The Gale · benefited (Kip, Eastgate)</option>
+        <option value="Sgt. Falkirk">Sgt. Falkirk · benefited (Owen Bramwell, Kingsbridge)</option>
+      </optgroup>
+    </select>
+    <div class="profile" id="profile"></div>
+  </div>
+
+  <div class="bar" role="group" aria-label="Prototype controls">
+    <span class="lbl">Version</span>
+    <div class="seg" role="group" aria-label="Version">
+      <button id="mToday" aria-pressed="false">Today (4.2)</button>
+      <button id="mBrief" aria-pressed="true">With this brief</button>
+    </div>
+    <span class="lbl" style="margin-left:8px">Try it</span>
+    <button class="btn primary" id="aPing"></button>
+    <button class="btn" id="aMiss3"></button>
+    <button class="btn" id="aDays">A few days pass</button>
+    <button class="btn" id="aFresh">Day one: fresh start</button>
+    <span class="spacer"></span>
+    <label class="lbl">Start from
+      <select id="startFrom" class="btn" style="padding:5px 8px">
+        <option value="now" selected>6 Sep: now</option>
+        <option value="release">12 Aug: release day</option>
+      </select></label>
+    <label class="lbl"><input type="checkbox" id="realTime"> Real-time 60s</label>
+    <button class="btn" id="aReset">Reset</button>
+  </div>
+
+  <p class="caption" id="caption"></p>
+
+  <div class="grid">
+    <section id="secPhone">
+      <p class="where" id="wPhone"></p>
+      <div class="phone"><div class="screen" id="screen"></div></div>
+    </section>
+
+    <section id="secConsole">
+      <p class="where" id="wConsole"></p>
+      <div class="console">
+        <div class="ctop"><b>Rook Dispatch</b><span style="color:var(--muted);font-size:13px">Coverage</span><span class="who" id="cWho"></span></div>
+        <div class="cards" id="cards">
+          <article class="card" id="cSel"></article>
+          <article class="card" id="cPar"></article>
+        </div>
+      </div>
+
+      <div class="bts">
+        <h2 id="btsH"></h2>
+        <p class="note" id="btsNote"></p>
+        <div class="scorebar"><span id="scoreLbl"></span><div class="track"><div class="fill" id="fill"></div><div class="neutral" title="Neutral 0.5"></div></div><b id="scoreVal"></b></div>
+        <ol class="log" id="log"></ol>
+      </div>
+    </section>
+  </div>
+
+  <footer>Responder stats come from the pings table (before = 29 Jun–11 Aug, after = 12 Aug–6 Sep). Starting scores replay the routing code's rules over every ping, starting from neutral 0.50 on 29 Jun; real scores aren't in the database. Rules in "Today" mode come from the code (a miss or a no costs 0.12, a yes adds 0.08, and nothing else ever adds points back). "With this brief" values are placeholders for Wen to set. "Pings today" counts and callout details are illustrative. Cover names and routing status only; nothing records or infers a legal identity (Security Policy 4.1).</footer>
+</div>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+
+  /* From rook-database pings: per-week rates, misses, longest gap after 12 Aug, and replayed scores. */
+  const R = {
+    'Meteor Mite': {short:'Mite', group:'quiet', handler:'Kip', area:'Eastgate', wkB:11.1, wkA:3.8, missB:'2 of 70', missA:'8 of 14', rel:1.00, end:0.00, gap:'29 Aug – 5 Sep (7 days)', partner:'The Gale'},
+    'Vesper': {short:'Vesper', group:'quiet', handler:'Aunt Dot', area:'Old Town', wkB:13.7, wkA:4.6, missB:'3 of 86', missA:'9 of 17', rel:0.96, end:0.00, gap:'26 Aug – 1 Sep (about 6 days)'},
+    'The Undertow': {short:'The Undertow', group:'quiet', handler:'Desmond Okafor', area:'Harborside', wkB:11.9, wkA:3.8, missB:'1 of 75', missA:'9 of 14', rel:0.88, end:0.00, gap:'27 Aug – 5 Sep (about 9 days)'},
+    'Farlight': {short:'Farlight', group:'quiet', handler:'Linda Pruitt', area:'Uptown', wkB:11.9, wkA:3.0, missB:'3 of 75', missA:'7 of 11', rel:0.84, end:0.00, gap:'23 – 28 Aug (5 days)'},
+    'The Gale': {short:'The Gale', group:'benefited', handler:'Kip', area:'Eastgate', wkB:13.0, wkA:18.6, missB:'4 of 82', missA:'8 of 69', rel:0.96, end:0.96, partner:'Meteor Mite'},
+    'Sgt. Falkirk': {short:'Falkirk', group:'benefited', handler:'Owen Bramwell', area:'Kingsbridge', wkB:10.0, wkA:14.0, missB:'2 of 63', missA:'8 of 52', rel:1.00, end:0.76}
+  };
+  const TAGS = ['structural-entry','crowd-management','de-escalation','hazmat-tolerant'];
+  const RULES = {
+    today:{credit:0.08, penalty:0.12, notNow:0.12},
+    brief:{credit:0.08, penalty:0.08, notNow:0}
+  };
+  let S, tick = null, unlockT = null, flashT = null;
+
+  function card(name, now){
+    const r = R[name];
+    return {name, score: now ? r.end : r.rel, misses:0, recovering:false, freshStart:false, evenOut:false,
+      pings:0, base: r.group==='benefited' ? 7 : 0, taken:false, warnDismissed:false};
+  }
+  function fresh(mode){
+    const now = $('startFrom').value==='now';
+    const name = $('who').value, r = R[name];
+    return {mode, start: now?'now':'release', name, r, sel: card(name, now), par: r.partner ? card(r.partner, now) : null,
+      phone:'idle', banner:null, ping:null, remaining:60, n:0, log:[], caption:null, live:null};
+  }
+  const clamp = v => Math.max(0, Math.min(1, Math.round(v*100)/100));
+  function stop(){ if(tick){clearInterval(tick);tick=null;} if(unlockT){clearTimeout(unlockT);unlockT=null;} }
+  function log(text, tag){ S.log.unshift({text, tag}); }
+  function say(where, text){ S.caption = {where, text}; S.live = where; }
+  function flash(id){ const el=$(id); el.classList.add('flash'); clearTimeout(flashT); flashT=setTimeout(()=>el.classList.remove('flash'),1200); }
+  const stepMs = () => $('realTime').checked ? 1000 : 100;
+  function nowTime(){ const d=new Date(); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
+  const sh = () => S.r.short;
+  const quiet = () => S.r.group==='quiet';
+
+  /* ---------- actions ---------- */
+  function sendPing(){
+    stop();
+    const t = TAGS[S.n % TAGS.length], mins = [8,14,6,17][S.n % 4]; S.n++;
+    S.ping = {area:S.r.area, tag:t, mins};
+    S.remaining = 60; S.sel.pings++; S.banner = null; S.sel.taken = false;
+    S.phone = S.mode==='brief' ? 'ping-lock' : 'ping-lock-today';
+    say('phone', S.mode==='brief'
+      ? '<b>A ping arrives.</b> Take and Not now are right on the lock screen, with a countdown. Click one, or let it run out.'
+      : '<b>A ping arrives.</b> There are no buttons on the lock screen. Click the notification to unlock and open the app, then try to answer in time.');
+    log(`Ping sent to ${S.name}: ${t}`, S.mode==='brief'?'Row: A ping arrives':'Today');
+    tick = setInterval(()=>{
+      S.remaining--;
+      if(S.remaining<=0){ stop(); miss(); render(); return; }
+      const rg = document.querySelector('#screen .ring');
+      if(rg) rg.outerHTML = ring();
+    }, stepMs());
+    render();
+  }
+
+  function take(){
+    stop();
+    const c = S.sel;
+    c.score = clamp(c.score + RULES[S.mode].credit);
+    c.misses = 0; c.taken = true; S.phone = 'result';
+    if(S.mode==='brief' && c.score>=0.5) c.recovering=false;
+    S.banner = {cls:'good', h:'Callout taken', b:`${S.ping.area}, about ${S.ping.mins} min away. ${S.r.handler} can see you're on it.`};
+    say('both', `<b>Taken.</b> ${sh()}'s card on ${S.r.handler}'s console updates straight away.`);
+    log(`${S.name} took it with ${S.remaining}s left. Score +${RULES[S.mode].credit.toFixed(2)}.`, 'Taken');
+    flash('cSel'); render();
+  }
+
+  function notNow(){
+    stop();
+    const c = S.sel;
+    c.score = clamp(c.score - RULES[S.mode].notNow);
+    S.phone = 'result';
+    if(S.mode==='brief'){
+      S.banner = {cls:'info', h:'No problem', b:'This one is going to the next responder. Saying "not now" never counts against you.'};
+      say('phone', `<b>Not now is free.</b> ${sh()} is told it didn't count against them. Only letting a ping run out costs anything.`);
+      log('Not now. No cost.', 'Row: Can\'t go');
+    } else {
+      c.misses = 0;
+      S.banner = {cls:'grey', h:'Callout declined', b:''};
+      say('phone', `<b>Turned down.</b> Today, a no costs exactly the same as letting the ping run out, and ${sh()} isn't told either way.`);
+      log('Turned down. Score -0.12, the same as a miss.', 'Today');
+    }
+    render();
+  }
+
+  function applyMiss(){
+    const c = S.sel;
+    c.score = clamp(c.score - RULES[S.mode].penalty);
+    c.misses++;
+    if(S.mode==='brief'){ c.recovering=false; c.warnDismissed=false; }
+  }
+
+  function miss(){
+    applyMiss();
+    if(S.mode==='brief'){
+      S.phone='result';
+      S.banner = {cls:'info', h:'This one moved on to the next responder', b: standingLine()};
+      say(S.sel.misses>=3?'both':'phone', S.sel.misses>=3
+        ? `<b>Missed, three times in a row.</b> ${sh()} is told what happened. ${S.r.handler} gets a same-day warning on the card.`
+        : `<b>The ping ran out.</b> ${sh()} is told it moved on, with no blame and no score.`);
+      log(`Ping ran out. Score -${RULES.brief.penalty.toFixed(2)} (smaller than today's 0.12).`, 'Row: The ping runs out');
+      if(S.sel.misses>=3) flash('cSel');
+    } else {
+      S.phone = (S.phone==='ping-app' || S.phone==='unlocking') ? 'gone-app' : 'idle';
+      S.banner = null;
+      say('phone', S.phone==='gone-app'
+        ? '<b>Gone.</b> "No longer available," with no reason given. This is the "gone before I could answer" ticket.'
+        : `<b>The notification just disappeared.</b> ${sh()} isn't told anything, and nothing changes on ${S.r.handler}'s console.`);
+      log('Ping ran out. Score -0.12. Nobody is told.', 'Today');
+    }
+  }
+
+  function miss3(){
+    stop();
+    for(let i=0;i<3;i++){ S.sel.pings++; applyMiss(); }
+    if(S.mode==='brief'){
+      S.phone='result';
+      S.banner = {cls:'info', h:'3 pings moved on to other responders today', b: standingLine()};
+      say('both', `<b>Three misses in a row.</b> ${sh()}'s phone explains, and ${S.r.handler}'s card warns them the same day.` + (quiet()?'':` The same rules apply to busy responders too.`));
+      log('3 pings ran out.', 'Row: Console warning');
+      flash('cSel');
+    } else {
+      S.phone='idle'; S.banner=null;
+      say('console', `<b>Three misses in a row.</b> ${S.r.handler}'s console looks exactly the same as before, and ${sh()}'s phone is blank.`);
+      log('3 pings ran out. Score -0.36. Nobody is told.', 'Today');
+    }
+    render();
+  }
+
+  function ease(c){
+    if(c.score >= 0.5) return false;
+    c.score = clamp(c.score + (0.5 - c.score)*0.6); c.recovering = true; c.misses = 0; return true;
+  }
+
+  function daysPass(){
+    stop();
+    const c = S.sel;
+    if(S.mode==='brief'){
+      const before = c.score, eased = ease(c);
+      c.misses = 0; c.warnDismissed = false;
+      if(S.par) ease(S.par);
+      if(!quiet() || (S.par && R[S.par.name].group==='benefited')){
+        (quiet() ? S.par : c).evenOut = true;
+      }
+      if(quiet()) {
+        S.phone='result';
+        S.banner = c.score>=0.45
+          ? {cls:'good', h:'You\'re back in the normal rotation', b:'Pings will come in as usual.'}
+          : {cls:'info', h:'Your pings will pick up over the next few days', b:''};
+      } else { S.phone='idle'; S.banner=null; }
+      say('both', quiet()
+        ? (eased ? `<b>A few days pass.</b> ${sh()}'s score eases back toward neutral, so the pings return. ${S.r.handler} sees "Recovering."` : `<b>A few days pass.</b> ${sh()} is above neutral, so nothing needs to ease back.`)
+        : `<b>A few days pass.</b> As the quiet responders' scores ease back, some callouts go back to them. ${sh()}'s card shows the load evening out. Expected, not proven.`);
+      log(eased ? `Score eased back toward neutral: ${before.toFixed(2)} → ${c.score.toFixed(2)} (placeholder pace, Wen to set).` : `${sh()}'s score is above neutral; no change.`, 'Row: After a bad stretch');
+      flash('cSel'); if(S.par) flash('cPar');
+    } else {
+      S.phone = quiet() && c.score<0.5 ? 'silent' : 'idle'; S.banner=null;
+      S.phone = c.score<0.5 ? 'silent' : 'idle';
+      say('both', c.score<0.5
+        ? `<b>A few days pass.</b> Nothing eases back, so ${sh()} stays lower in the order and gets fewer pings, with no explanation.` + (S.r.gap ? ` After 4.2, ${sh()}'s longest silence was ${S.r.gap}.` : ` The same trap the quiet 4 fell into can catch a busy responder too.`)
+        : quiet() ? `<b>A few days pass.</b> ${sh()} is still high enough to get pings. Try "misses 3 in a row" a couple of times first.`
+        : `<b>A few days pass.</b> Nothing changes. ${sh()} keeps picking up the callouts the quiet responders aren't being offered: ${S.r.wkB} → ${S.r.wkA} pings a week since 4.2.`);
+      log('Days pass. Score unchanged: nothing in the code adds points back.', 'Today');
+    }
+    render();
+  }
+
+  function freshStart(){
+    stop();
+    const reset = c => { if(R[c.name].group==='quiet'){ c.score=Math.max(c.score,0.5); c.freshStart=true; c.recovering=false; c.misses=0; } else { c.evenOut=true; } };
+    reset(S.sel); if(S.par) reset(S.par);
+    if(quiet()){
+      S.phone='result';
+      S.banner = {cls:'good', h:'A fresh start', b:'Some pings recently ran out faster than they used to. That was a change on our side, and we\'ve reset your standing.'};
+      say('both', `<b>Day one.</b> A one-time reset to neutral for responders 4.2 pushed down. ${sh()} gets an honest message, and ${S.r.handler}'s card says so too. (Who it covers, and the wording, are Helen's call.)`);
+      log('Fresh start: score reset to neutral 0.50.', 'Row: Day one');
+    } else {
+      S.phone='idle'; S.banner=null;
+      say('both', `<b>Day one.</b> The reset only applies to responders 4.2 pushed down, so ${sh()}'s score doesn't change and ${sh()} gets no message. ${sh()}'s card shows that some callouts will start going back to them.` + (S.par?` On the same console, Meteor Mite's card shows the fresh start.`:''));
+      log(`${sh()}'s score unchanged; the reset only covers responders pushed down.`, 'Row: Day one');
+    }
+    flash('cSel'); if(S.par) flash('cPar'); render();
+  }
+
+  function unlockAndOpen(){
+    if(S.phone!=='ping-lock-today') return;
+    S.phone='unlocking';
+    say('phone', '<b>Unlocking and opening the app.</b> The countdown keeps running, and the responder can\'t see it.');
+    render();
+    unlockT = setTimeout(()=>{ if(S.phone==='unlocking'){ S.phone='ping-app'; render(); } }, stepMs()*22);
+  }
+
+  function setMode(m){ stop(); S = fresh(m); intro(); render(); }
+  function intro(){
+    const r = S.r, n = sh(), sc = S.sel.score.toFixed(2);
+    const when = S.start==='now' ? '6 Sep' : '12 Aug';
+    let t;
+    if(quiet()){
+      t = S.start==='now'
+        ? (S.mode==='brief'
+            ? `${n}'s score is already at zero after the August misses. ${r.handler}'s card says why. Try <b>Day one: fresh start</b>, then <b>Send ${n} a ping</b>.`
+            : `${n}'s score is at zero after the August misses. The phone is silent and ${r.handler}'s card explains nothing. Try <b>A few days pass</b>: nothing changes.`)
+        : `Release day. Try <b>Send ${n} a ping</b>, then <b>${n} misses 3 in a row</b> twice and <b>A few days pass</b>.`;
+    } else {
+      t = S.mode==='brief'
+        ? `${n} has been much busier since 4.2 (${r.wkB} → ${r.wkA} pings a week). Try <b>A few days pass</b> or <b>Day one: fresh start</b> to see the load even out, or <b>Send ${n} a ping</b>.`
+        : `${n} has been much busier since 4.2 (${r.wkB} → ${r.wkA} pings a week), picking up callouts the quiet responders aren't offered. Try <b>A few days pass</b>.`;
+    }
+    say(null, `<b>${when}, ${S.mode==='brief'?'with this brief':'today'}.</b> ${t}`);
+    log(`Starting point: ${S.name}'s score ${sc} on ${when} (replay of the code's rules over the pings table).`, 'Start');
+  }
+
+  /* ---------- views ---------- */
+  function standingLine(){
+    const c = S.sel;
+    if(c.score>=0.5) return 'You\'re in the normal rotation.';
+    if(c.misses>=3) return 'A few missed in a row means fewer pings for a while. Your pings will pick up over the next few days.';
+    return 'You\'re still in the rotation.';
+  }
+
+  function ring(){
+    const r=19, c=2*Math.PI*r, off=c*(1-S.remaining/60);
+    return `<svg class="ring" viewBox="0 0 46 46" aria-label="${S.remaining} seconds left"><circle class="bgc" cx="23" cy="23" r="${r}"/><circle class="fg" cx="23" cy="23" r="${r}" stroke-dasharray="${c}" stroke-dashoffset="${off}"/><text x="23" y="27.5" text-anchor="middle">${S.remaining}</text></svg>`;
+  }
+
+  function lockFrame(inner){
+    return `<div class="notch"></div><div class="lock-time">${nowTime()}</div><div class="lock-date">${S.r.area}</div><div class="stack">${inner}</div><div class="home-ind"></div>`;
+  }
+
+  function renderPhone(){
+    const sc = $('screen'); sc.classList.remove('app');
+    const p = S.ping;
+    let h='';
+    switch(S.phone){
+      case 'ping-lock':
+        h = lockFrame(`<div class="notif"><div class="app"><i></i>Rook Dispatch · now</div>
+          <div class="row"><div><div class="t">New callout · ${p.area}</div><div>${p.tag} · about ${p.mins} min away</div></div>${ring()}</div>
+          <div class="acts"><button class="take" id="bTake">Take</button><button class="notnow" id="bNot">Not now</button></div></div>
+          <div class="hint">Answer without unlocking</div>`);
+        break;
+      case 'ping-lock-today':
+        h = lockFrame(`<div class="notif tap" id="bOpen" role="button" tabindex="0"><div class="app"><i></i>Rook Dispatch · now</div>
+          <div class="t">New callout</div><div>Tap to open</div></div><div class="hint">Click the notification</div>`);
+        break;
+      case 'unlocking':
+        h = lockFrame(`<div class="unlock"><div class="spinner"></div>Unlocking… opening Rook Dispatch</div>`);
+        break;
+      case 'ping-app':
+        sc.classList.add('app');
+        h = `<div class="notch"></div><div class="appbar">Rook Dispatch</div><div class="appbody">
+          <div class="appcard"><div style="font-weight:600">Callout · ${p.area}</div><div style="color:#6b675f">${p.tag} · about ${p.mins} min away</div></div>
+          <div class="acts"><button class="take" id="bTake">Take</button><button class="decline" id="bNot">Turn down</button></div></div><div class="home-ind"></div>`;
+        break;
+      case 'gone-app':
+        sc.classList.add('app');
+        h = `<div class="notch"></div><div class="appbar">Rook Dispatch</div><div class="appbody"><div class="gone">This callout is no longer available.</div></div><div class="home-ind"></div>`;
+        break;
+      case 'silent':
+        h = lockFrame(`<div class="hint" style="font-size:13px">No notifications</div>`);
+        break;
+      case 'result':
+        if(S.banner && S.banner.cls!=='grey'){
+          h = lockFrame(`<div class="msg ${S.banner.cls}"><div style="font-size:11.5px;opacity:.75;margin-bottom:4px;text-transform:uppercase">Rook Dispatch</div><div class="h">${S.banner.h}</div>${S.banner.b?`<div>${S.banner.b}</div>`:''}</div>`);
+        } else {
+          sc.classList.add('app');
+          h = `<div class="notch"></div><div class="appbar">Rook Dispatch</div><div class="appbody"><div class="gone">${S.banner?S.banner.h:''}</div></div><div class="home-ind"></div>`;
+        }
+        break;
+      default:
+        h = lockFrame(`<div class="hint">No notifications</div>`);
+    }
+    sc.innerHTML = h;
+    const t=$('bTake'), n=$('bNot'), o=$('bOpen');
+    if(t) t.onclick = take;
+    if(n) n.onclick = notNow;
+    if(o){ o.onclick = unlockAndOpen; o.onkeydown = e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();unlockAndOpen();} }; }
+  }
+
+  function cardHTML(c, isSel){
+    const r = R[c.name], short = r.short;
+    const head = `<div>${isSel?'<div class="sel">Selected</div>':''}<h3>${c.name}</h3><div class="meta">${r.area}</div></div>`;
+    const avail = c.taken ? '<span class="pill ok">On a callout</span>' : '<span class="pill plain">Available</span>';
+    const kv = `<div class="kv"><span>Pings today</span><b>${c.base + c.pings - (c.evenOut && r.group==='benefited' ? 2 : 0)}</b></div>`;
+    if(S.mode==='today') return `${head}<div>${avail}</div>${kv}<div class="empty">No other information on this card today.</div>`;
+    let status, cls, pill;
+    if(c.freshStart && c.score>=0.5 && c.misses===0){ cls='ok'; pill='<span class="pill ok">Normal rotation</span>'; status='Fresh start applied today. Back in the normal rotation.'; }
+    else if(c.recovering){ cls='warn'; pill='<span class="pill warn">Recovering</span>'; status='Recovering: the next pings are on their way.'; }
+    else if(c.score<0.5){ cls='bad'; pill='<span class="pill bad">Quieter than usual</span>'; status = c.misses>0 ? `Quieter than usual: ${c.misses} missed ping${c.misses>1?'s':''} moved ${short} down the order.` : `Quieter than usual: recent missed pings moved ${short} down the order.`; }
+    else if(r.group==='benefited' && c.evenOut){ cls='ok'; pill='<span class="pill ok">Evening out</span>'; status='Evening out: some callouts are going back to responders who\'d gone quiet. <i>(Expected, not proven.)</i>'; }
+    else if(r.group==='benefited'){ cls='warn'; pill='<span class="pill warn">Busier than usual</span>'; status='Busier than usual: picking up callouts that would usually go to responders who\'ve gone quiet.'; }
+    else { cls='ok'; pill='<span class="pill ok">Normal rotation</span>'; status='Normal rotation.'; }
+    const warn = (isSel && c.misses>=3 && !c.warnDismissed)
+      ? `<div class="alert" role="alert"><span>⚠</span><span><b>${c.misses} pings missed in a row today.</b> Worth checking in with ${short}.</span><button class="btn" id="bDismiss">Got it</button></div>` : '';
+    return `${head}<div style="display:flex;gap:6px;flex-wrap:wrap">${avail}${pill}</div>${warn}<div class="status ${cls}">${status}</div>${kv}`;
+  }
+
+  function render(){
+    const r = S.r, n = sh();
+    $('mToday').setAttribute('aria-pressed', S.mode==='today');
+    $('mBrief').setAttribute('aria-pressed', S.mode==='brief');
+    $('aFresh').disabled = S.mode!=='brief';
+    $('aFresh').title = S.mode!=='brief' ? 'Only in "With this brief"' : '';
+    $('aPing').textContent = `Send ${n} a ping`;
+    $('aMiss3').textContent = `${n} misses 3 in a row`;
+    $('wPhone').innerHTML = `<span class="dot"></span>Where: ${S.name}'s phone · lock screen`;
+    $('wConsole').innerHTML = `<span class="dot"></span>Where: ${r.handler}'s console · centre screen · coverage cards`;
+    $('secPhone').setAttribute('aria-label', `${S.name}'s phone`);
+    $('secConsole').setAttribute('aria-label', `${r.handler}'s console`);
+    $('cWho').textContent = `Handler: ${r.handler} · ${S.par?2:1} responder${S.par?'s':''}`;
+    $('profile').innerHTML = `<span class="pill ${r.group==='quiet'?'bad':'warn'}">${r.group==='quiet'?'Quiet 4':'Benefited'}</span>
+      <span><span class="g">${S.name}</span> · ${r.handler} · ${r.area}</span>
+      <span>Pings a week: <b>${r.wkB}</b> → <b>${r.wkA}</b></span>
+      <span>Missed: ${r.missB} → ${r.missA}</span>
+      <span>Replayed score: ${r.rel.toFixed(2)} (12 Aug) → ${r.end.toFixed(2)} (6 Sep)</span>
+      ${r.gap?`<span>Longest silence after 4.2: ${r.gap}</span>`:''}
+      <span class="src">Before = 29 Jun–11 Aug, after = 12 Aug–6 Sep (pings table).</span>`;
+    renderPhone();
+    $('cards').classList.toggle('one', !S.par);
+    $('cSel').innerHTML = cardHTML(S.sel, true);
+    $('cPar').style.display = S.par ? '' : 'none';
+    if(S.par) $('cPar').innerHTML = cardHTML(S.par, false);
+    const d=$('bDismiss'); if(d) d.onclick=()=>{ S.sel.warnDismissed=true; log(`${r.handler} acknowledged the warning.`, 'Row: Console'); render(); };
+    const c = S.caption;
+    const wl = {phone:`${n}'s phone`, console:`${r.handler}'s console`, both:`${n}'s phone and ${r.handler}'s console`};
+    $('caption').innerHTML = (c.where ? `<b>Where:</b> ${wl[c.where]} · ` : '') + c.text;
+    $('wPhone').classList.toggle('live', S.live==='phone'||S.live==='both');
+    $('wConsole').classList.toggle('live', S.live==='console'||S.live==='both');
+    $('btsH').textContent = `Behind the scenes (for Helen, not shown to ${n} or ${r.handler})`;
+    $('scoreLbl').textContent = `${n}'s recent-acceptance score`;
+    $('fill').style.width = (S.sel.score*100)+'%';
+    $('scoreVal').textContent = S.sel.score.toFixed(2);
+    $('btsNote').textContent = S.mode==='brief'
+      ? 'With this brief: a miss costs less, Not now is free, and a low score eases back toward neutral (the line at 0.50). Responders and handlers only ever see plain words.'
+      : 'Today: a miss and a no both cost 0.12, a yes adds 0.08, and nothing else ever adds points back. A low score means fewer pings, which means fewer chances to climb back. A busy responder gets plenty of chances, so their score holds up even with more misses.';
+    $('log').innerHTML = S.log.length ? S.log.map(l=>`<li>${l.text}<span class="tag">${l.tag}</span></li>`).join('') : '<li class="empty">Nothing yet.</li>';
+  }
+
+  $('mToday').onclick = ()=>setMode('today');
+  $('mBrief').onclick = ()=>setMode('brief');
+  $('aPing').onclick = sendPing;
+  $('aMiss3').onclick = miss3;
+  $('aDays').onclick = daysPass;
+  $('aFresh').onclick = freshStart;
+  $('aReset').onclick = ()=>setMode(S.mode);
+  $('startFrom').onchange = ()=>setMode(S.mode);
+  $('who').onchange = ()=>setMode(S.mode);
+
+  S = fresh('brief'); intro(); render();
+})();
+</script>
+</body>
+</html>

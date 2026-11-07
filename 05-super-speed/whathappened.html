@@ -1,0 +1,531 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What Happened Replay</title>
+<style>
+:root{
+  --bg:#f4f2ee; --panel:#ffffff; --ink:#1d1c1a; --muted:#6b675f; --line:#dedad2;
+  --accent:#2f5d8a; --accent-ink:#ffffff; --ok:#2e7d4f; --warn:#b26a00; --bad:#b3362c;
+  --ok-bg:#e6f3ea; --warn-bg:#fdf1dc; --bad-bg:#f9e3e0; --info-bg:#e5eef7;
+  --phone:#111214; --phone-ink:#f2f2f2; --phone-card:rgba(255,255,255,.14);
+  --console:#fbfaf7;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#161616; --panel:#202020; --ink:#ecebe8; --muted:#a29d94; --line:#3a3936;
+    --accent:#7fb0e0; --accent-ink:#0f1a26; --ok:#6cc58f; --warn:#e8a64a; --bad:#ef7f74;
+    --ok-bg:#1d3326; --warn-bg:#3a2c14; --bad-bg:#3b1f1c; --info-bg:#1b2a3a; --console:#1b1b1b;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#161616; --panel:#202020; --ink:#ecebe8; --muted:#a29d94; --line:#3a3936;
+  --accent:#7fb0e0; --accent-ink:#0f1a26; --ok:#6cc58f; --warn:#e8a64a; --bad:#ef7f74;
+  --ok-bg:#1d3326; --warn-bg:#3a2c14; --bad-bg:#3b1f1c; --info-bg:#1b2a3a; --console:#1b1b1b;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{padding:20px 16px 8px;max-width:1180px;margin:0 auto}
+h1{font-size:22px;margin:0 0 4px}
+.sub{color:var(--muted);margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px 32px}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:14px 0;padding:12px;background:var(--panel);border:1px solid var(--line);border-radius:12px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.seg button{border:0;background:transparent;color:var(--ink);padding:7px 14px;font:inherit;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.btn{border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:7px 12px;border-radius:8px;font:inherit;cursor:pointer}
+.btn:hover:not(:disabled){border-color:var(--accent)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.lbl{color:var(--muted);font-size:13px;margin-right:2px}
+.spacer{flex:1}
+.caption{margin:0 0 14px;padding:10px 14px;border-radius:10px;background:var(--info-bg);font-size:14px}
+.caption b{font-weight:600}
+.grid{display:grid;grid-template-columns:340px 1fr;gap:20px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:1fr}}
+.where{font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:0 0 8px;display:flex;align-items:center;gap:8px}
+.where .dot{width:8px;height:8px;border-radius:50%;background:var(--line)}
+.where.live .dot{background:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 25%,transparent)}
+
+/* phone */
+.phone{width:300px;max-width:100%;height:600px;margin:0 auto;background:var(--phone);border-radius:42px;padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.25);position:relative}
+.screen{height:100%;border-radius:30px;overflow:hidden;position:relative;color:var(--phone-ink);
+  background:linear-gradient(160deg,#2b3a55 0%,#1c2436 55%,#151a26 100%);display:flex;flex-direction:column}
+.screen.app{background:#f6f5f2;color:#1d1c1a}
+.notch{width:90px;height:22px;background:var(--phone);border-radius:0 0 14px 14px;margin:0 auto}
+.lock-time{text-align:center;font-size:56px;font-weight:300;margin-top:18px;letter-spacing:-1px}
+.lock-date{text-align:center;font-size:14px;opacity:.8;margin-top:-4px}
+.stack{padding:14px 12px;display:flex;flex-direction:column;gap:10px;margin-top:auto;margin-bottom:auto}
+.notif{background:var(--phone-card);backdrop-filter:blur(8px);border-radius:18px;padding:12px 12px 10px;font-size:13.5px}
+.notif.tap{cursor:pointer}
+.notif .app{display:flex;align-items:center;gap:6px;font-size:11.5px;opacity:.8;margin-bottom:4px;text-transform:uppercase;letter-spacing:.03em}
+.notif .app i{width:16px;height:16px;border-radius:4px;background:#e2b33c;display:inline-block}
+.notif .t{font-weight:600;font-size:14.5px}
+.notif .row{display:flex;align-items:center;gap:10px;margin-top:8px}
+.notif .acts{display:flex;gap:8px;margin-top:10px}
+.notif .acts button{flex:1;border:0;border-radius:12px;padding:10px;font:600 14px system-ui,sans-serif;cursor:pointer}
+.take{background:#3fae6b;color:#fff}
+.notnow{background:rgba(255,255,255,.22);color:#fff}
+.ring{width:46px;height:46px;flex:none}
+.ring circle{fill:none;stroke-width:5}
+.ring .bgc{stroke:rgba(255,255,255,.2)}
+.ring .fg{stroke:#ffd166;stroke-linecap:round;transform:rotate(-90deg);transform-origin:50% 50%;transition:stroke-dashoffset .1s linear}
+.ring text{fill:#fff;font:600 13px system-ui,sans-serif}
+.msg{background:var(--phone-card);border-radius:18px;padding:14px;font-size:14px}
+.msg .h{font-weight:600;margin-bottom:4px}
+.msg.good{border-left:4px solid #3fae6b}
+.msg.info{border-left:4px solid #8ab4f8}
+.msg.grey{opacity:.85}
+.hint{font-size:12px;opacity:.7;text-align:center}
+.unlock{margin:auto;text-align:center;font-size:14px;opacity:.9}
+.spinner{width:28px;height:28px;border:3px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;margin:0 auto 10px;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.appbar{padding:10px 16px;background:#1f3047;color:#fff;font-weight:600;font-size:14px}
+.appbody{padding:16px;display:flex;flex-direction:column;gap:12px;flex:1}
+.appcard{background:#fff;border:1px solid #e1ddd5;border-radius:14px;padding:14px}
+.appbody .acts{display:flex;gap:8px;margin-top:auto}
+.appbody .acts button{flex:1;border:0;border-radius:12px;padding:12px;font:600 14px system-ui,sans-serif;cursor:pointer}
+.decline{background:#e6e2da;color:#1d1c1a}
+.gone{margin:auto;text-align:center;color:#6b675f}
+.home-ind{width:110px;height:4px;border-radius:2px;background:rgba(255,255,255,.6);margin:6px auto 8px}
+.screen.app .home-ind{background:rgba(0,0,0,.35)}
+
+/* console */
+.console{background:var(--console);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.ctop{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--panel)}
+.ctop b{font-size:14px}
+.ctop .who{margin-left:auto;color:var(--muted);font-size:13px}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:14px}
+@media (max-width:560px){.cards{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px;transition:box-shadow .3s,border-color .3s}
+.card.flash{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 30%,transparent)}
+.card h3{margin:0;font-size:16px}
+.card .meta{color:var(--muted);font-size:13px}
+.kv{display:flex;justify-content:space-between;font-size:13.5px;border-top:1px dashed var(--line);padding-top:8px}
+.pill{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px}
+.pill.ok{background:var(--ok-bg);color:var(--ok)}
+.pill.warn{background:var(--warn-bg);color:var(--warn)}
+.pill.bad{background:var(--bad-bg);color:var(--bad)}
+.pill.plain{background:var(--line);color:var(--ink)}
+.status{font-size:13.5px;padding:9px 11px;border-radius:9px}
+.status.ok{background:var(--ok-bg)}
+.status.warn{background:var(--warn-bg)}
+.status.bad{background:var(--bad-bg)}
+.alert{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;padding:9px 11px;border-radius:9px;background:var(--bad-bg);border:1px solid var(--bad)}
+.alert button{margin-left:auto}
+.empty{color:var(--muted);font-size:13px;font-style:italic}
+
+/* behind the scenes */
+.bts{margin-top:20px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+.bts h2{font-size:15px;margin:0 0 2px}
+.bts .note{color:var(--muted);font-size:13px;margin:0 0 10px}
+.scorebar{display:flex;align-items:center;gap:10px;font-size:13.5px;margin-bottom:10px;flex-wrap:wrap}
+.track{flex:1;min-width:160px;height:10px;background:var(--line);border-radius:5px;position:relative;overflow:hidden}
+.fill{height:100%;background:var(--accent);transition:width .4s}
+.neutral{position:absolute;left:50%;top:-3px;bottom:-3px;width:2px;background:var(--muted)}
+ol.log{margin:0;padding-left:20px;font-size:13.5px;max-height:220px;overflow:auto}
+ol.log li{margin:4px 0}
+ol.log .tag{font-size:11.5px;color:var(--muted);margin-left:6px}
+footer{color:var(--muted);font-size:12.5px;margin-top:16px}
+.who-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 14px}
+.who-row select{font:inherit;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);min-width:260px}
+.profile{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;padding:10px 14px;background:var(--panel);border:1px solid var(--line);border-radius:10px;font-size:13.5px;flex:1;min-width:280px}
+.profile .g{font-weight:600}
+.profile .src{color:var(--muted);font-size:12px;flex-basis:100%}
+.cards.one{grid-template-columns:1fr}
+.card .sel{font-size:11px;color:var(--accent);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.clock{font-variant-numeric:tabular-nums;font-weight:600;min-width:150px}
+input[type=range]{flex:1;min-width:180px;accent-color:var(--accent)}
+.tl{width:100%;height:auto;display:block;margin:6px 0 10px}
+.tl .ax{stroke:var(--line);stroke-width:1}
+.tl .neu{stroke:var(--muted);stroke-dasharray:3 3;stroke-width:1}
+.tl .sc{fill:none;stroke:var(--accent);stroke-width:2}
+.tl .alt{fill:none;stroke:var(--muted);stroke-width:1.5;stroke-dasharray:4 3;opacity:.7}
+.tl .wn{fill:var(--bad);font-weight:700}
+.tl .ph{stroke:var(--ink);stroke-width:1.5}
+.tl text{fill:var(--muted);font:11px system-ui,sans-serif}
+.tl .T{fill:var(--ok)} .tl .D{fill:var(--warn)} .tl .M{fill:var(--bad)}
+.tl .fut{opacity:.18}
+.legend{display:flex;gap:14px;font-size:12.5px;color:var(--muted);flex-wrap:wrap}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.summary{margin-top:12px;padding:12px 14px;border-radius:10px;background:var(--info-bg);font-size:14px;display:none}
+.summary.on{display:block}
+.summary a{color:var(--accent)}
+.silence{font-size:12.5px;opacity:.75;text-align:center;margin-top:6px}
+</style>
+</head>
+<body>
+<header>
+  <h1>What happened: 12 Aug – 6 Sep</h1>
+  <p class="sub">A replay of every real ping the selected responder got after 4.2, sped up. It shows how each responder reached the starting point in <code>prototype.html</code>. Fictional course scenario.</p>
+</header>
+<div class="wrap">
+
+  <div class="who-row">
+    <label class="lbl" for="who">Responder</label>
+    <select id="who">
+      <optgroup label="Quiet 4: pushed down after 4.2">
+        <option value="Meteor Mite" selected>Meteor Mite · quiet 4 (Kip, Eastgate)</option>
+        <option value="Vesper">Vesper · quiet 4 (Aunt Dot, Old Town)</option>
+        <option value="The Undertow">The Undertow · quiet 4 (Desmond Okafor, Harborside)</option>
+        <option value="Farlight">Farlight · quiet 4 (Linda Pruitt, Uptown)</option>
+      </optgroup>
+      <optgroup label="Benefited: much busier after 4.2">
+        <option value="The Gale">The Gale · benefited (Kip, Eastgate)</option>
+        <option value="Sgt. Falkirk">Sgt. Falkirk · benefited (Owen Bramwell, Kingsbridge)</option>
+      </optgroup>
+    </select>
+    <div class="profile" id="profile"></div>
+  </div>
+
+  <div class="bar" role="group" aria-label="Rules">
+    <span class="lbl">Rules</span>
+    <div class="seg" role="group" aria-label="Rules">
+      <button data-m="today" aria-pressed="true">As it happened (4.2)</button>
+      <button data-m="brief" aria-pressed="false">If the brief's rules had been live</button>
+    </div>
+    <span class="lbl" id="rulesNote" style="flex:1;min-width:240px"></span>
+  </div>
+
+  <div class="bar" role="group" aria-label="Replay controls">
+    <button class="btn primary" id="play">▶ Play</button>
+    <button class="btn" id="restart">Restart</button>
+    <span class="lbl">Speed</span>
+    <div class="seg" role="group" aria-label="Speed">
+      <button data-s="0.5" aria-pressed="false">½×</button>
+      <button data-s="1" aria-pressed="true">1×</button>
+      <button data-s="2" aria-pressed="false">2×</button>
+      <button data-s="4" aria-pressed="false">4×</button>
+    </div>
+    <span class="clock" id="clock"></span>
+    <input type="range" id="scrub" min="0" max="37439" value="0" aria-label="Replay position">
+  </div>
+
+  <p class="caption" id="caption"></p>
+
+  <div class="grid">
+    <section id="secPhone">
+      <p class="where" id="wPhone"></p>
+      <div class="phone"><div class="screen" id="screen"></div></div>
+    </section>
+
+    <section id="secConsole">
+      <p class="where" id="wConsole"></p>
+      <div class="console">
+        <div class="ctop"><b>Rook Dispatch</b><span style="color:var(--muted);font-size:13px">Coverage</span><span class="who" id="cWho"></span></div>
+        <div class="cards" id="cards">
+          <article class="card" id="cSel"></article>
+          <article class="card" id="cPar"></article>
+        </div>
+      </div>
+
+      <div class="bts">
+        <h2 id="btsH"></h2>
+        <p class="note">Every dot is a real ping from the pings table. The solid line is the score under the rules you've picked above. The dashed line is the other set of rules, for comparison. Both are replayed ping by ping; real scores aren't in the database. A red "!" marks a same-day warning to the handler under the brief's rules.</p>
+        <div class="scorebar"><span id="scoreLbl"></span><div class="track"><div class="fill" id="fill"></div><div class="neutral" title="Neutral 0.5"></div></div><b id="scoreVal"></b></div>
+        <svg class="tl" id="tl" viewBox="0 0 640 150" role="img" aria-label="Timeline of pings and score"></svg>
+        <div class="legend"><span><i style="background:var(--ok)"></i>Taken</span><span><i style="background:var(--warn)"></i>Turned down</span><span><i style="background:var(--bad)"></i>Missed</span><span>— score · - - neutral 0.50</span></div>
+        <ol class="log" id="log" style="margin-top:10px"></ol>
+        <div class="summary" id="summary"></div>
+      </div>
+    </section>
+  </div>
+
+  <footer>Source: rook-database pings table, every ping sent to these six responders from 12 Aug to 6 Sep 2026 (177 pings), with who was pinged earlier on the same callout and who took it in the end. The pings table has no answer times, so the replay can't show how many seconds each one took. Phone and console screens show 4.2 as it is today. "Pings today" and "Last 7 days" are counted from the same data. "If the brief's rules had been live" keeps every real ping and only re-scores them, using placeholder values for Wen to set. It can't show pings that a higher score would have brought, or misses that a lock-screen answer might have saved. Cover names and routing status only; nothing records or infers a legal identity (Security Policy 4.1).</footer>
+</div>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const R = {
+    'Meteor Mite': {short:'Mite', group:'quiet', handler:'Kip', area:'Eastgate', wkB:11.1, wkA:3.8, rel:1.00, partner:'The Gale'},
+    'Vesper': {short:'Vesper', group:'quiet', handler:'Aunt Dot', area:'Old Town', wkB:13.7, wkA:4.6, rel:0.96},
+    'The Undertow': {short:'The Undertow', group:'quiet', handler:'Desmond Okafor', area:'Harborside', wkB:11.9, wkA:3.8, rel:0.88},
+    'Farlight': {short:'Farlight', group:'quiet', handler:'Linda Pruitt', area:'Uptown', wkB:11.9, wkA:3.0, rel:0.84},
+    'The Gale': {short:'The Gale', group:'benefited', handler:'Kip', area:'Eastgate', wkB:13.0, wkA:18.6, rel:0.96, partner:'Meteor Mite'},
+    'Sgt. Falkirk': {short:'Falkirk', group:'benefited', handler:'Owen Bramwell', area:'Kingsbridge', wkB:10.0, wkA:14.0, rel:1.00}
+  };
+  const QUIET = ['Meteor Mite','Vesper','The Undertow','Farlight'];
+
+  /* [time "MM-DD HH:MI", responder, outcome T/D/M, position in line, who took the callout, who was pinged earlier] */
+  const RAW = [["08-12 09:04","The Undertow","M",1,"Stormwrack",""],["08-12 16:35","Sgt. Falkirk","D",1,"Farlight",""],["08-12 16:36","Farlight","T",3,"Farlight","Sgt. Falkirk|Cindermark"],["08-12 19:04","Meteor Mite","D",2,"Nightwell","Captain Vantage"],["08-12 19:04","The Gale","M",3,"Nightwell","Captain Vantage|Meteor Mite"],["08-12 19:51","Farlight","M",2,"Cindermark","Ironvale"],["08-12 20:02","Farlight","D",1,"Sgt. Falkirk",""],["08-12 20:03","Sgt. Falkirk","T",2,"Sgt. Falkirk","Farlight"],["08-13 07:34","Vesper","M",1,"The Longcast",""],["08-13 09:45","Farlight","M",1,"Sgt. Falkirk",""],["08-13 09:46","Sgt. Falkirk","T",3,"Sgt. Falkirk","Farlight|Cindermark"],["08-13 11:24","The Undertow","M",1,"",""],["08-13 12:23","Sgt. Falkirk","M",1,"Corporal Ashgrove",""],["08-13 13:28","The Undertow","T",2,"The Undertow","Stormwrack"],["08-13 13:43","Meteor Mite","M",1,"Nightwell",""],["08-13 13:44","The Gale","M",3,"Nightwell","Meteor Mite|Captain Vantage"],["08-13 14:51","Farlight","M",1,"Sgt. Falkirk",""],["08-13 14:52","Sgt. Falkirk","T",2,"Sgt. Falkirk","Farlight"],["08-13 15:12","Meteor Mite","M",1,"The Gale",""],["08-13 15:13","The Gale","T",2,"The Gale","Meteor Mite"],["08-13 15:55","The Undertow","T",1,"The Undertow",""],["08-13 18:02","Sgt. Falkirk","M",1,"",""],["08-13 18:44","The Undertow","M",1,"",""],["08-14 02:53","The Undertow","M",2,"","Stormwrack"],["08-14 02:53","Vesper","T",3,"Vesper","The Longcast|Nightwell"],["08-14 07:26","Meteor Mite","M",1,"The Gale",""],["08-14 07:27","The Gale","T",2,"The Gale","Meteor Mite"],["08-14 10:22","The Undertow","M",1,"Ironvale",""],["08-14 11:45","The Gale","T",2,"The Gale","Sgt. Bulwark"],["08-14 14:25","Sgt. Falkirk","T",2,"Sgt. Falkirk","Corporal Ashgrove"],["08-14 16:32","Farlight","M",1,"Cindermark",""],["08-14 17:10","Vesper","M",1,"Captain Vantage",""],["08-14 19:42","The Gale","D",1,"Sgt. Bulwark",""],["08-14 21:22","Farlight","T",1,"Farlight",""],["08-14 22:43","The Gale","T",1,"The Gale",""],["08-15 13:02","Vesper","T",3,"Vesper","Nightwell|The Longcast"],["08-15 15:18","The Gale","D",1,"Meteor Mite",""],["08-15 15:18","Meteor Mite","T",3,"Meteor Mite","The Gale|Sgt. Bulwark"],["08-15 15:33","Vesper","D",1,"Nightwell",""],["08-15 19:06","Sgt. Falkirk","T",1,"Sgt. Falkirk",""],["08-15 19:40","Meteor Mite","T",2,"Meteor Mite","Sgt. Bulwark"],["08-15 20:58","Vesper","T",3,"Vesper","The Longcast|Nightwell"],["08-16 09:45","The Gale","T",3,"The Gale","Sgt. Bulwark|Nightwell"],["08-16 10:46","Vesper","M",1,"Captain Vantage",""],["08-16 11:16","Meteor Mite","M",1,"",""],["08-16 13:46","The Undertow","D",1,"The Drift",""],["08-16 14:05","Vesper","M",1,"Captain Vantage",""],["08-16 16:03","Vesper","T",2,"Vesper","Captain Vantage"],["08-16 21:33","The Gale","D",1,"Nightwell",""],["08-16 23:19","The Gale","T",1,"The Gale",""],["08-17 08:55","Vesper","T",2,"Vesper","Nightwell"],["08-17 12:05","Sgt. Falkirk","T",1,"Sgt. Falkirk",""],["08-17 14:10","The Undertow","D",1,"The Drift",""],["08-17 17:03","The Gale","T",1,"The Gale",""],["08-17 19:07","The Undertow","T",1,"The Undertow",""],["08-17 19:22","The Gale","T",1,"The Gale",""],["08-17 19:43","The Gale","D",1,"Nightwell",""],["08-17 20:56","The Gale","T",1,"The Gale",""],["08-17 22:35","The Gale","T",1,"The Gale",""],["08-18 07:37","Meteor Mite","D",1,"The Gale",""],["08-18 07:37","The Gale","T",2,"The Gale","Meteor Mite"],["08-18 10:47","The Gale","T",3,"The Gale","Sgt. Bulwark|Nightwell"],["08-18 14:33","Sgt. Falkirk","T",1,"Sgt. Falkirk",""],["08-18 16:18","The Undertow","M",1,"Ironvale",""],["08-18 18:20","The Gale","D",1,"Sgt. Bulwark",""],["08-18 18:32","Sgt. Falkirk","D",1,"",""],["08-18 18:47","Sgt. Falkirk","T",1,"Sgt. Falkirk",""],["08-18 22:14","Sgt. Falkirk","T",1,"Sgt. Falkirk",""],["08-19 06:49","Sgt. Falkirk","T",1,"Sgt. Falkirk",""],["08-19 13:28","Sgt. Falkirk","D",1,"",""],["08-19 13:28","Farlight","M",2,"","Sgt. Falkirk"],["08-19 17:29","The Gale","M",1,"Meteor Mite",""],["08-19 17:30","Meteor Mite","T",2,"Meteor Mite","The Gale"],["08-19 18:42","Vesper","M",1,"The Longcast",""],["08-19 21:38","Sgt. Falkirk","T",1,"Sgt. Falkirk",""],["08-20 12:35","The Gale","D",1,"",""],["08-20 16:41","Meteor Mite","M",1,"",""],["08-21 16:44","Sgt. Falkirk","M",1,"",""],["08-21 16:45","The Undertow","M",1,"The Drift",""],["08-21 17:10","The Gale","T",2,"The Gale","Sgt. Bulwark"],["08-21 20:55","Sgt. Falkirk","T",1,"Sgt. Falkirk",""],["08-21 21:58","The Gale","T",1,"The Gale",""],["08-22 11:13","Farlight","D",1,"Cindermark",""],["08-22 11:45","The Gale","T",1,"The Gale",""],["08-22 12:25","The Gale","T",1,"The Gale",""],["08-22 20:52","The Gale","M",1,"Nightwell",""],["08-22 20:53","Meteor Mite","M",2,"Nightwell","The Gale"],["08-23 00:10","Vesper","M",1,"Captain Vantage",""],["08-23 00:11","Sgt. Falkirk","T",1,"Sgt. Falkirk",""],["08-23 05:34","Vesper","D",1,"Nightwell",""],["08-23 10:07","The Gale","T",1,"The Gale",""],["08-23 11:05","Sgt. Falkirk","T",2,"Sgt. Falkirk","Corporal Ashgrove"],["08-23 13:51","Farlight","M",1,"Cindermark",""],["08-23 16:49","Sgt. Falkirk","M",1,"Corporal Ashgrove",""],["08-23 18:35","The Gale","T",1,"The Gale",""],["08-23 20:15","Vesper","M",2,"The Longcast","Halfmoon"],["08-24 07:09","Sgt. Falkirk","D",2,"","Corporal Ashgrove"],["08-24 14:36","Sgt. Falkirk","T",1,"Sgt. Falkirk",""],["08-24 17:11","The Gale","T",1,"The Gale",""],["08-24 17:12","The Gale","M",1,"Nightwell",""],["08-24 19:00","The Gale","M",1,"",""],["08-24 21:40","Vesper","D",1,"",""],["08-25 01:53","The Gale","T",1,"The Gale",""],["08-25 11:19","The Gale","T",2,"The Gale","Sgt. Bulwark"],["08-25 12:09","The Gale","D",1,"",""],["08-25 19:35","Sgt. Falkirk","M",1,"Cindermark",""],["08-26 01:20","Sgt. Falkirk","T",1,"Sgt. Falkirk",""],["08-26 02:18","Sgt. Falkirk","T",1,"Sgt. Falkirk",""],["08-26 09:41","The Gale","T",1,"The Gale",""],["08-26 12:33","The Gale","T",1,"The Gale",""],["08-26 18:09","Vesper","M",1,"",""],["08-26 18:35","Sgt. Falkirk","T",1,"Sgt. Falkirk",""],["08-27 10:37","Sgt. Falkirk","T",3,"Sgt. Falkirk","Cindermark|Sgt. Bulwark"],["08-27 20:03","Meteor Mite","D",1,"",""],["08-27 23:18","The Undertow","M",1,"The Drift",""],["08-28 05:10","The Gale","T",1,"The Gale",""],["08-28 06:39","The Gale","D",2,"","Nightwell"],["08-28 17:04","The Gale","T",2,"The Gale","Nightwell"],["08-28 17:28","The Gale","T",1,"The Gale",""],["08-28 19:28","Farlight","M",1,"Cindermark",""],["08-28 21:16","The Gale","T",1,"The Gale",""],["08-29 09:15","Meteor Mite","M",1,"The Gale",""],["08-29 09:17","The Gale","T",3,"The Gale","Meteor Mite|Nightwell"],["08-29 11:00","Sgt. Falkirk","T",1,"Sgt. Falkirk",""],["08-29 19:15","Sgt. Falkirk","T",3,"Sgt. Falkirk","Cindermark|Sgt. Bulwark"],["08-29 19:42","Sgt. Falkirk","T",1,"Sgt. Falkirk",""],["08-29 20:41","Sgt. Falkirk","D",1,"",""],["08-30 05:06","The Gale","T",1,"The Gale",""],["08-30 07:21","The Gale","D",1,"Sgt. Bulwark",""],["08-30 10:18","Sgt. Falkirk","M",1,"Sgt. Bulwark",""],["08-30 13:51","The Gale","D",2,"Nightwell","Captain Vantage"],["08-30 13:59","Sgt. Falkirk","T",1,"Sgt. Falkirk",""],["08-30 18:26","The Gale","T",1,"The Gale",""],["08-30 19:28","The Gale","T",1,"The Gale",""],["08-30 19:40","The Gale","T",1,"The Gale",""],["08-30 19:47","Sgt. Falkirk","T",1,"Sgt. Falkirk",""],["08-30 19:50","Sgt. Falkirk","T",1,"Sgt. Falkirk",""],["08-31 10:37","The Gale","D",1,"",""],["08-31 15:03","Sgt. Falkirk","T",1,"Sgt. Falkirk",""],["08-31 16:45","Sgt. Falkirk","T",2,"Sgt. Falkirk","Sgt. Bulwark"],["08-31 17:40","The Gale","D",1,"Sgt. Bulwark",""],["08-31 17:43","Sgt. Falkirk","T",3,"Sgt. Falkirk","Cindermark|Sgt. Bulwark"],["08-31 19:51","Sgt. Falkirk","T",2,"Sgt. Falkirk","Cindermark"],["09-01 07:56","The Gale","T",2,"The Gale","Nightwell"],["09-01 11:42","Vesper","M",1,"Nightwell",""],["09-01 14:22","Sgt. Falkirk","T",1,"Sgt. Falkirk",""],["09-01 17:56","The Gale","T",1,"The Gale",""],["09-01 18:57","The Gale","T",1,"The Gale",""],["09-01 20:00","The Gale","M",1,"Sgt. Bulwark",""],["09-01 20:06","Sgt. Falkirk","D",1,"Corporal Ashgrove",""],["09-01 21:20","Sgt. Falkirk","T",1,"Sgt. Falkirk",""],["09-02 11:38","Sgt. Falkirk","T",1,"Sgt. Falkirk",""],["09-02 14:59","Sgt. Falkirk","T",1,"Sgt. Falkirk",""],["09-02 15:29","The Gale","T",1,"The Gale",""],["09-02 18:22","Sgt. Falkirk","M",1,"",""],["09-03 10:15","Sgt. Falkirk","T",1,"Sgt. Falkirk",""],["09-03 12:40","The Gale","T",1,"The Gale",""],["09-03 12:43","Sgt. Falkirk","D",1,"Cindermark",""],["09-03 16:57","The Gale","T",1,"The Gale",""],["09-03 22:24","The Gale","M",1,"Sgt. Bulwark",""],["09-04 06:27","The Gale","T",1,"The Gale",""],["09-04 07:14","The Gale","T",1,"The Gale",""],["09-04 08:52","The Gale","T",1,"The Gale",""],["09-04 16:33","The Gale","T",1,"The Gale",""],["09-04 19:27","Sgt. Falkirk","T",1,"Sgt. Falkirk",""],["09-04 21:48","The Gale","T",2,"The Gale","Sgt. Bulwark"],["09-05 12:15","The Gale","T",1,"The Gale",""],["09-05 13:13","The Gale","T",1,"The Gale",""],["09-05 15:06","Meteor Mite","M",1,"Nightwell",""],["09-05 15:17","The Undertow","M",1,"Stormwrack",""],["09-05 16:01","The Gale","T",1,"The Gale",""],["09-05 17:57","The Gale","T",1,"The Gale",""],["09-05 18:20","The Gale","D",1,"Sgt. Bulwark",""],["09-05 19:57","The Gale","T",1,"The Gale",""],["09-05 21:56","Sgt. Falkirk","T",1,"Sgt. Falkirk",""],["09-06 03:26","Sgt. Falkirk","D",1,"",""],["09-06 15:22","Sgt. Falkirk","M",2,"Sgt. Bulwark","Cindermark"]];
+
+  const END = 25*1440 + 1439;  // 6 Sep 23:59, minutes since 12 Aug 00:00
+  const MON = ['','','','','','','','','Aug','Sep'];
+  function toMin(s){ const m=+s.slice(0,2), d=+s.slice(3,5), h=+s.slice(6,8), mi=+s.slice(9,11);
+    return ((m===8 ? d-12 : 19+d)*1440) + h*60 + mi; }
+  function dayOf(min){ const d=Math.floor(min/1440); return d<=19 ? {m:8, d:12+d} : {m:9, d:d-19}; }
+  function label(min, withTime=true){ min=Math.floor(min); const x=dayOf(min), hm=min%1440;
+    return `${x.d} ${MON[x.m]}` + (withTime ? ` ${String(Math.floor(hm/60)).padStart(2,'0')}:${String(hm%60).padStart(2,'0')}` : ''); }
+  const EV = RAW.map(r=>({t:toMin(r[0]), r:r[1], o:r[2], pos:r[3], took:r[4], before:r[5]?r[5].split('|'):[]}));
+
+  const clamp = v => Math.max(0, Math.min(1, Math.round(v*100)/100));
+
+  /* Brief's rules (placeholder values, Wen to set): a miss costs 0.08, Not now (turned down) costs nothing,
+     a yes adds 0.08, and a score below neutral eases back toward 0.50 by 26% of the gap each day. */
+  const NEW = {credit:0.08, miss:0.08, down:0, easePerDay:0.26};
+  function ease(s, mins){ if(s>=0.5 || mins<=0) return s; return 0.5 - (0.5 - s)*Math.pow(1-NEW.easePerDay, mins/1440); }
+
+  const BY = {};
+  for(const name of Object.keys(R)){
+    let s = R[name].rel, n = R[name].rel, lastT = 0, streak = 0; const list = [];
+    for(const e of EV) if(e.r===name){
+      const b = s; s = clamp(s + (e.o==='T' ? 0.08 : -0.12));
+      const nb = ease(n, e.t - lastT);
+      n = Math.max(0, Math.min(1, nb + (e.o==='T' ? NEW.credit : e.o==='D' ? -NEW.down : -NEW.miss)));
+      streak = e.o==='M' ? streak+1 : 0;
+      list.push(Object.assign({}, e, {sb:b, sa:s, nb, na:n, streak}));
+      lastT = e.t;
+    }
+    BY[name] = list;
+  }
+
+  let name, r, sel, par, t=0, playing=false, speed=1, hold=0, cur=null, nextIdx=0, lastFrame=0, mode='today';
+  const MIN_PER_SEC = 720;   // 1×: one day every 2 seconds
+  const HOLD = 1.8;          // seconds each of the selected responder's pings stays on screen at 1×
+  const B = () => mode==='brief';
+
+  function setWho(n){
+    name=n; r=R[n]; sel=BY[n]; par=r.partner?BY[r.partner]:null;
+    restart(); renderStatic();
+  }
+  function restart(){ t=0; hold=0; cur=null; nextIdx=0; $('summary').classList.remove('on'); render(); }
+
+  function stateAt(list, rel, upto){
+    let score=rel, last=null, today=0, week=0, n=0, streak=0;
+    const day=Math.floor(upto/1440);
+    for(const e of list){ if(e.t>upto) break; last=e; n++; streak=e.streak;
+      if(Math.floor(e.t/1440)===day) today++;
+      if(e.t>upto-7*1440) week++; }
+    if(B()) score = last ? ease(last.na, upto - last.t) : ease(rel, upto);
+    else score = last ? last.sa : rel;
+    return {score,last,today,week,n,streak};
+  }
+
+  /* ---------- loop ---------- */
+  function frame(now){
+    const dt = lastFrame ? Math.min(0.1,(now-lastFrame)/1000) : 0; lastFrame = now;
+    if(playing){
+      if(hold>0){ hold -= dt*speed; if(hold<=0){ cur=null; } }
+      else {
+        let nt = t + dt*speed*MIN_PER_SEC;
+        if(nextIdx < sel.length && sel[nextIdx].t <= nt){ t = sel[nextIdx].t; cur = sel[nextIdx]; nextIdx++; hold = HOLD; }
+        else t = Math.min(nt, END);
+        if(t>=END && hold<=0){ t=END; playing=false; finish(); }
+      }
+      render();
+    }
+    requestAnimationFrame(frame);
+  }
+
+  function seek(v){ t=+v; hold=0; cur=null; nextIdx = sel.findIndex(e=>e.t>t); if(nextIdx<0) nextIdx=sel.length; if(t>=END) finish(); else $('summary').classList.remove('on'); render(); }
+
+  /* ---------- views ---------- */
+  const OUT = {T:'Taken', D:'Turned down', M:'Missed'};
+  const OUTB = {T:'Taken', D:'Not now', M:'Missed'};
+  const f2 = v => v.toFixed(2);
+  function lockFrame(inner, min){
+    min = Math.floor(min); const hm=min%1440;
+    return `<div class="notch"></div><div class="lock-time">${String(Math.floor(hm/60)).padStart(2,'0')}:${String(hm%60).padStart(2,'0')}</div><div class="lock-date">${label(min,false)} · ${r.area}</div><div class="stack">${inner}</div><div class="home-ind"></div>`;
+  }
+  function appFrame(inner){ return `<div class="notch"></div><div class="appbar">Rook Dispatch</div><div class="appbody">${inner}</div><div class="home-ind"></div>`; }
+  function msg(cls, h, b){ return `<div class="msg ${cls}"><div style="font-size:11.5px;opacity:.75;margin-bottom:4px;text-transform:uppercase">Rook Dispatch</div><div class="h">${h}</div>${b?`<div>${b}</div>`:''}</div>`; }
+  function standing(s){ return s>=0.45 ? 'You\'re in the normal rotation.' : 'Your pings will pick up over the next few days.'; }
+
+  function renderPhone(st){
+    const sc=$('screen'); sc.classList.remove('app');
+    if(cur){
+      const phase = hold > HOLD*0.45 ? 'ping' : 'out';
+      if(phase==='ping'){
+        sc.innerHTML = B()
+          ? lockFrame(`<div class="notif"><div class="app"><i></i>Rook Dispatch · now</div><div class="t">New callout · ${r.area}</div><div class="acts"><button class="take" tabindex="-1">Take</button><button class="notnow" tabindex="-1">Not now</button></div></div><div class="hint">Answer without unlocking</div>`, t)
+          : lockFrame(`<div class="notif"><div class="app"><i></i>Rook Dispatch · now</div><div class="t">New callout</div><div>Tap to open</div></div>`, t);
+      } else if(cur.o==='T'){
+        sc.classList.add('app'); sc.innerHTML = appFrame(`<div class="appcard"><div style="font-weight:600">Callout taken</div><div style="color:#6b675f">${r.handler} can see you're on it.</div></div>`);
+      } else if(cur.o==='D'){
+        if(B()) sc.innerHTML = lockFrame(msg('info','No problem','This one is going to the next responder. Saying "not now" never counts against you.'), t);
+        else { sc.classList.add('app'); sc.innerHTML = appFrame(`<div class="gone">Callout declined</div>`); }
+      } else {
+        sc.innerHTML = B()
+          ? lockFrame(msg('info','This one moved on to the next responder', standing(cur.na)), t)
+          : lockFrame(`<div class="hint">No notifications</div>`, t);
+      }
+      return;
+    }
+    const since = st.last ? t - st.last.t : t;
+    const days = Math.floor(since/1440);
+    if(B() && st.last && st.score < 0.5){
+      sc.innerHTML = lockFrame(st.score>=0.45 ? msg('good','You\'re back in the normal rotation','Pings will come in as usual.') : msg('info','Your pings will pick up over the next few days',''), t);
+      return;
+    }
+    sc.innerHTML = lockFrame(`<div class="hint">No notifications</div>${days>=2?`<div class="silence">No pings for ${days} days</div>`:''}`, t);
+  }
+
+  function cardHTML(n, st, isSel){
+    const rr=R[n];
+    const head = `<div>${isSel?'<div class="sel">Selected</div>':''}<h3>${n}</h3><div class="meta">${rr.area}</div></div>`;
+    const onCall = st.last && st.last.o==='T' && t - st.last.t < 120;
+    const avail = onCall?'<span class="pill ok">On a callout</span>':'<span class="pill plain">Available</span>';
+    const kv = `<div class="kv"><span>Pings today</span><b>${st.today}</b></div><div class="kv"><span>Last 7 days</span><b>${st.week}</b></div>`;
+    if(!B()) return `${head}<div>${avail}</div>${kv}<div class="empty">No other information on this card today.</div>`;
+    const recentMiss = st.last && st.last.o==='M' && t - st.last.t < 1440;
+    let cls, pill, status;
+    if(st.score < 0.5 && recentMiss){ cls='bad'; pill='<span class="pill bad">Quieter than usual</span>'; status=`Quieter than usual: missed pings moved ${rr.short} down the order.`; }
+    else if(st.score < 0.45){ cls='warn'; pill='<span class="pill warn">Recovering</span>'; status='Recovering: the next pings are on their way.'; }
+    else if(rr.group==='benefited'){ cls='warn'; pill='<span class="pill warn">Busier than usual</span>'; status='Busier than usual: picking up callouts that would usually go to responders who\'ve gone quiet.'; }
+    else { cls='ok'; pill='<span class="pill ok">Normal rotation</span>'; status='Normal rotation.'; }
+    const warn = (st.streak>=3 && st.last && Math.floor(st.last.t/1440)===Math.floor(t/1440))
+      ? `<div class="alert" role="alert"><span>⚠</span><span><b>${st.streak} pings missed in a row today.</b> Worth checking in with ${rr.short}.</span></div>` : '';
+    return `${head}<div style="display:flex;gap:6px;flex-wrap:wrap">${avail}${pill}</div>${warn}<div class="status ${cls}">${status}</div>${kv}`;
+  }
+
+  function captionText(st){
+    const n=r.short;
+    if(cur){
+      const k = sel.indexOf(cur)+1;
+      const line = cur.pos===1 ? 'First in line.' : `#${cur.pos} in line, after ${cur.before.join(', ')}.`;
+      const went = cur.took ? `The callout went to ${cur.took}.` : 'Nobody took this callout.';
+      const b = B() ? cur.nb : cur.sb, a = B() ? cur.na : cur.sa;
+      let out;
+      if(cur.o==='T') out = `<b>Taken.</b> Score ${f2(b)} → ${f2(a)}.`;
+      else if(B()) out = cur.o==='M'
+          ? `<b>Missed.</b> ${went} ${n} is told it moved on. Score ${f2(b)} → ${f2(a)} (a smaller cost than 4.2's 0.12).` + (cur.streak>=3 ? ` <b>${cur.streak} in a row:</b> ${r.handler} gets a same-day warning.` : '')
+          : `<b>Not now.</b> ${went} No cost: score stays ${f2(a)}.`;
+      else out = cur.o==='M'
+          ? `<b>Missed:</b> no answer within 60 seconds. ${went} ${n} isn't told. Score ${f2(b)} → ${f2(a)}.`
+          : `<b>Turned down.</b> ${went} Score ${f2(b)} → ${f2(a)}, the same cost as a miss.`;
+      const fromQuiet = r.group==='benefited' && cur.before.some(x=>QUIET.includes(x))
+        ? ` This callout was offered to ${cur.before.filter(x=>QUIET.includes(x)).join(', ')} first.` : '';
+      return `<b>${label(cur.t)} · ${n}'s ping ${k} of ${sel.length}.</b> ${line} ${out}${fromQuiet}`;
+    }
+    if(t>=END) return B()
+      ? `<b>6 Sep, end of the data.</b> Under the brief's rules, ${n} would be at ${f2(st.score)} instead of ${f2(stateAtMode('today'))}.`
+      : `<b>6 Sep, end of the data.</b> This is where <code>prototype.html</code> starts.`;
+    const since = st.last ? t - st.last.t : t;
+    const days = Math.floor(since/1440);
+    if(r.group==='quiet' && days>=2) return B()
+      ? `<b>${label(t,false)} · ${days} days since ${n}'s last ping.</b> The score is easing back toward neutral: now ${f2(st.score)}. In reality the pings stayed this sparse. With a recovering score, ${n} would probably have been offered more.`
+      : `<b>${label(t,false)} · Silence.</b> ${days} days since ${n}'s last ping. Score ${f2(st.score)}, and nothing in the code adds points back without a taken ping.`;
+    if(t===0) return `<b>12 Aug, release day.</b> ${n} starts at a replayed score of ${f2(r.rel)}. Press <b>Play</b>.`;
+    return `<b>${label(t,false)}.</b> ${n}: ${st.n} of ${sel.length} pings so far, score ${f2(st.score)}. ${st.week} pings in the last 7 days (before 4.2: about ${r.wkB} a week).`;
+  }
+  function stateAtMode(m){ const keep=mode; mode=m; const s=stateAt(sel, r.rel, t).score; mode=keep; return s; }
+
+  function curve(m, upto){
+    // points for a score line under mode m, up to time upto
+    const keep=mode; mode=m;
+    const pts=[]; const step=180;
+    for(let x=0; x<=upto; x+=step){ pts.push([x, stateAt(sel, r.rel, x).score]); }
+    for(const e of sel){ if(e.t>upto) break; pts.push([e.t-0.01, m==='brief'?e.nb:e.sb]); pts.push([e.t, m==='brief'?e.na:e.sa]); }
+    pts.push([upto, stateAt(sel, r.rel, upto).score]);
+    mode=keep;
+    return pts.sort((a,b)=>a[0]-b[0]);
+  }
+
+  function timeline(st){
+    const W=640, H=150, L=34, Rr=8, T=10, Bt=110;
+    const x = m => L + (W-L-Rr)*m/END, y = s => Bt - (Bt-T)*s;
+    let h = `<line class="ax" x1="${L}" y1="${Bt}" x2="${W-Rr}" y2="${Bt}"/><line class="ax" x1="${L}" y1="${T}" x2="${L}" y2="${Bt}"/>
+      <line class="neu" x1="${L}" y1="${y(0.5)}" x2="${W-Rr}" y2="${y(0.5)}"/>
+      <text x="${L-4}" y="${y(1)+4}" text-anchor="end">1.0</text><text x="${L-4}" y="${y(0.5)+4}" text-anchor="end">0.5</text><text x="${L-4}" y="${y(0)+4}" text-anchor="end">0</text>`;
+    for(const d of [0,5,10,15,20,25]){ h += `<text x="${x(d*1440)}" y="${Bt+14}" text-anchor="middle">${label(d*1440,false)}</text>`; }
+    const toPts = a => a.map(p=>`${x(p[0]).toFixed(1)},${y(p[1]).toFixed(1)}`).join(' ');
+    const other = mode==='brief' ? 'today' : 'brief';
+    h += `<polyline class="alt" points="${toPts(curve(other, END))}"><title>${other==='brief'?'Brief\'s rules':'As it happened'}</title></polyline>`;
+    h += `<polyline class="sc" points="${toPts(curve(mode, Math.max(1,t)))}"/>`;
+    for(const e of sel){
+      h += `<circle class="${e.o}${e.t>t?' fut':''}" cx="${x(e.t)}" cy="${Bt+28}" r="4"><title>${label(e.t)} · ${(B()?OUTB:OUT)[e.o]}</title></circle>`;
+      if(B() && e.streak===3) h += `<text class="wn${e.t>t?' fut':''}" x="${x(e.t)}" y="${Bt+24}" text-anchor="middle">!</text>`;
+    }
+    h += `<line class="ph" x1="${x(t)}" y1="${T-4}" x2="${x(t)}" y2="${Bt+34}"/>`;
+    $('tl').innerHTML = h;
+  }
+
+  function renderStatic(){
+    const n=r.short;
+    const c = {T:0,D:0,M:0}; sel.forEach(e=>c[e.o]++);
+    $('profile').innerHTML = `<span class="pill ${r.group==='quiet'?'bad':'warn'}">${r.group==='quiet'?'Quiet 4':'Benefited'}</span>
+      <span><span class="g">${name}</span> · ${r.handler} · ${r.area}</span>
+      <span>12 Aug – 6 Sep: <b>${sel.length}</b> pings (${c.T} taken, ${c.D} turned down, ${c.M} missed)</span>
+      <span>Pings a week: ${r.wkB} before → ${r.wkA} after</span>
+      <span class="src">Pings table, 12 Aug – 6 Sep 2026.</span>`;
+    $('wPhone').innerHTML = `<span class="dot"></span>Where: ${name}'s phone`;
+    $('wConsole').innerHTML = `<span class="dot"></span>Where: ${r.handler}'s console · coverage cards`;
+    $('cWho').textContent = `Handler: ${r.handler} · ${par?2:1} responder${par?'s':''}`;
+    $('btsH').textContent = `Behind the scenes (not shown to ${n} or ${r.handler})`;
+    $('cards').classList.toggle('one', !par);
+    $('cPar').style.display = par ? '' : 'none';
+  }
+
+  function render(){
+    const st = stateAt(sel, r.rel, t);
+    $('clock').textContent = label(Math.floor(t));
+    $('scrub').value = Math.floor(t);
+    $('play').textContent = playing ? '❚❚ Pause' : (t>=END ? '↺ Replay' : '▶ Play');
+    document.querySelectorAll('[data-m]').forEach(x=>x.setAttribute('aria-pressed', x.dataset.m===mode));
+    $('rulesNote').textContent = B()
+      ? 'Same real pings, re-scored: a miss costs 0.08, Not now is free, and low scores ease back toward neutral (placeholder values, Wen to set). It can\'t show the extra pings a higher score would have brought.'
+      : 'The real pings, scored the way the 4.2 code does: a miss or a no costs 0.12, a yes adds 0.08, and nothing else adds points back.';
+    $('scoreLbl').textContent = `${r.short}'s score${B()?' under the brief':' (replayed)'}`;
+    renderPhone(st);
+    $('cSel').innerHTML = cardHTML(name, st, true);
+    if(par) $('cPar').innerHTML = cardHTML(r.partner, stateAt(par, R[r.partner].rel, t), false);
+    $('caption').innerHTML = captionText(st);
+    $('wPhone').classList.toggle('live', !!cur);
+    $('wConsole').classList.toggle('live', !!cur);
+    $('fill').style.width = (st.score*100)+'%';
+    $('scoreVal').textContent = f2(st.score);
+    timeline(st);
+    const items = [];
+    for(const e of sel){ if(e.t>t) break;
+      const went = e.o==='T' ? '' : (e.took ? ` → went to ${e.took}` : ' → nobody took it');
+      const q = r.group==='benefited' && e.before.some(x=>QUIET.includes(x)) ? ` (offered to ${e.before.filter(x=>QUIET.includes(x)).join(', ')} first)` : '';
+      const w = B() && e.streak===3 ? ` · <b>warning to ${r.handler}</b>` : '';
+      const b = B()?e.nb:e.sb, a = B()?e.na:e.sa;
+      items.push(`<li>${label(e.t)} · <b>${(B()?OUTB:OUT)[e.o]}</b>${e.pos>1?` (#${e.pos} in line)`:''}${went}${q}${w}<span class="tag">score ${f2(b)} → ${f2(a)}</span></li>`); }
+    $('log').innerHTML = items.length ? items.reverse().join('') : '<li class="empty">No pings yet.</li>';
+    if(t>=END) finish();
+  }
+
+  function finish(){
+    const n=r.short, c={T:0,D:0,M:0}; sel.forEach(e=>c[e.o]++);
+    let gapMax=0, gFrom=0, gTo=0, prev=0;
+    for(const e of sel){ if(e.t-prev>gapMax){ gapMax=e.t-prev; gFrom=prev; gTo=e.t; } prev=e.t; }
+    if(END-prev>gapMax){ gapMax=END-prev; gFrom=prev; gTo=END; }
+    const keep=mode;
+    mode='today'; const end42 = stateAt(sel, r.rel, END).score;
+    mode='brief'; const endB = stateAt(sel, r.rel, END).score;
+    const minB = Math.min(r.rel, ...sel.map(e=>e.na));
+    mode=keep;
+    const warns = sel.filter(e=>e.streak===3).map(e=>label(e.t,false));
+    let extra='';
+    if(r.group==='quiet'){
+      const went={}; sel.forEach(e=>{ if(e.o!=='T' && e.took) went[e.took]=(went[e.took]||0)+1; });
+      const top = Object.entries(went).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([k,v])=>`${k} (${v})`).join(', ');
+      extra = `Callouts ${n} missed or turned down went to: ${top || 'nobody'}.`;
+    } else {
+      const fromQ = sel.filter(e=>e.before.some(x=>QUIET.includes(x))).length;
+      extra = `${fromQ} of ${n}'s ${sel.length} pings were callouts offered to one of the quiet 4 first. With this many pings, ${n} had plenty of chances to win back points after each miss.`;
+    }
+    const head = `<b>What happened to ${name}, 12 Aug – 6 Sep:</b> ${sel.length} pings: ${c.T} taken, ${c.D} turned down, ${c.M} missed. Longest stretch with no ping: ${label(gFrom,false)} – ${label(gTo,false)} (about ${Math.round(gapMax/1440)} days). ${extra}`;
+    const brief = `<br><br><b>Under the brief's rules, same pings:</b> score ${f2(r.rel)} → <b>${f2(endB)}</b> on 6 Sep (4.2: ${f2(end42)}), never below ${f2(minB)}. ${n} would have been told what happened on each of the ${c.M} misses, and the ${c.D} "not now"s would have cost nothing. ${warns.length ? `${r.handler} would have had a same-day warning on ${warns.join(', ')}.` : `No run of 3 misses, so no warnings to ${r.handler}.`} <i>${r.group==='quiet'
+      ? `This replay keeps the real pings. With a higher score, ${n} would probably have been offered more, and the data can't show those.`
+      : `This replay keeps the real pings. With the quiet 4 scoring higher, some of these callouts would probably have gone to them instead, and the data can't show which.`}</i>`;
+    $('summary').innerHTML = head + brief + ` <a href="prototype.html">Open the prototype</a> to see what we'd change from here.`;
+    $('summary').classList.add('on');
+  }
+
+  $('play').onclick = ()=>{ if(t>=END){ restart(); } playing=!playing; lastFrame=0; render(); };
+  $('restart').onclick = ()=>{ playing=false; restart(); };
+  $('scrub').oninput = e=>{ playing=false; seek(e.target.value); };
+  $('who').onchange = e=>{ playing=false; setWho(e.target.value); };
+  document.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{ speed=+b.dataset.s; document.querySelectorAll('[data-s]').forEach(x=>x.setAttribute('aria-pressed', x===b)); });
+  document.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{ mode=b.dataset.m; render(); });
+
+  setWho('Meteor Mite');
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

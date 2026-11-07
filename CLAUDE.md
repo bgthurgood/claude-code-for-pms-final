@@ -180,3 +180,13 @@ The Q3 roadmap was last reviewed 30 Jun. Every item still lists Priya as owner.
   calibrated to replay but falls slower than reality. Old weights + 60s would likely have been worse (a miss is ≈4.8 vs 2.3 min of travel).
 - Proposed scoring idea: charge per second a ping is held (fast no < slow no < miss), no penalty for marking unavailable, rolling window.
   Open: Vesper's day-one drop (travel-time estimates, ask Wen), stored scores, actual answer times (Ravi), whether scores persist across restarts.
+- The responder I picked: **Meteor Mite** (Kip, Eastgate).
+- Session 5 (Helen's request in 05-super-speed/director-request.txt: a rough one-pager from the user's point of view, plus something clickable).
+  Built brief.md (one page; full version in brief-meteor-mite-detail.md), prototype.html (clickable phone + handler console) and
+  whathappened.html (replays every real ping from 12 Aug to 6 Sep, with a switch to re-score them under the brief's rules).
+- Brief's answer: keep 60s. Answer from the lock screen. "Not now" is free. Misses cost less. Low scores ease back toward neutral 0.5 (answers Wen's 2019 note
+  in history.py, which weighs both sides). One-time reset with an "on our side" message. Status line and same-day warning on handler cards.
+- Biggest gainers after 4.2: The Gale 13.0→18.6/wk and Sgt. Falkirk 10.0→14.0/wk. The Gale missed as many pings as Mite (8 each) but got 69 vs 14,
+  so it recovered. Re-scoring the same pings under the brief's placeholder rules: Mite and Vesper end at 0.60, Farlight 0.50, The Undertow 0.45 (all 0.00 under 4.2).
+- Open: Not now is free in the one-pager but costs a little in the detail file (settle it). The brief says Gale takes "Eastgate" callouts, but routing is citywide (fix).
+  Today's phone flow is assumed, not checked with Sofia. The new-rule values are placeholders for Wen. Helen decides the reset's scope and the "on our side" wording.
